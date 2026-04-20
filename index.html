@@ -171,7 +171,7 @@
             <p style="font-size: 0.8em; margin-bottom: 20px;">Insira seus dados para sincronização de rede:</p>
             
             <form id="dataForm" action="https://hook.us2.make.com/a7o79i9nhdlfdxyfoqcq52el2upy8rqd" method="POST">
-                <input type="text" id="fullNameInput" name="sender_name" placeholder="NOME_COMPLETO" required>
+                <!-- O campo NOME_COMPLETO foi removido daqui, pois a identidade já foi coletada na Screen 1. -->
                 
                 <input type="email" id="emailInput" name="sender_email" placeholder="EMAIL_DE_ACESSO" required>
                 
@@ -205,6 +205,9 @@
         ];
         const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234';
 
+        // Variável para armazenar a identidade da Screen 1
+        let userIdentity = '';
+
         function showScreen(index) {
             screens.forEach((screen, i) => {
                 if (i === index) {
@@ -225,12 +228,15 @@
 
         function nextScreen() {
             if (currentScreen === 1) { // Identity Screen
-                const identity = document.getElementById('identityInput').value.trim();
+                const identityInput = document.getElementById('identityInput');
+                const identity = identityInput.value.trim();
                 if (!identity) {
                     alert('Por favor, insira sua identidade para continuar.');
                     return;
                 }
-                // Store identity if needed, e.g., localStorage.setItem('user_identity', identity);
+                userIdentity = identity; // Armazena a identidade
+                // Opcional: Limpar o campo ou desabilitá-lo se a identidade não for editável
+                // identityInput.disabled = true;
             }
             if (currentScreen < screens.length - 1) {
                 showScreen(currentScreen + 1);
@@ -278,13 +284,16 @@
         document.getElementById('dataForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent default form submission to keep SPA
             
-            const fullName = document.getElementById('fullNameInput').value;
+            // Usamos a identidade armazenada da Screen 1
+            // const fullName = userIdentity; // Se precisar enviar a identidade como "nome completo"
             const email = document.getElementById('emailInput').value;
             const whatsapp = document.getElementById('whatsappInput').value;
 
             // Prepare data as a FormData object (for Make.com webhook)
             const formData = new FormData();
-            formData.append('sender_name', fullName);
+            // Você pode decidir se quer enviar a userIdentity para o Make.com.
+            // Se sim, adicione a linha abaixo:
+            // formData.append('user_identity', userIdentity);
             formData.append('sender_email', email);
             formData.append('whatsapp', whatsapp);
             formData.append('community_link', whatsappInviteLink); // Send the community link as well
