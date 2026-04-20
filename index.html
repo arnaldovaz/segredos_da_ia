@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACKEANDO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --terminal-green: #00FF00;
+            --terminal-white: #FFFFFF;
+            --terminal-black: #000000;
+            --error-red: #FF0000;
+            --flicker-duration: 0.1s;
+        }
+
+        body {
+            background-color: var(--terminal-black);
+            color: var(--terminal-green);
+            font-family: 'Roboto Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px; /* Garante altura mínima para centralização vertical */
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1, h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            animation: text-flicker var(--flicker-duration) infinite alternate;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            background-color: transparent;
+            border: 1px solid var(--terminal-green);
+            color: var(--terminal-green);
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1em;
+            outline: none;
+            text-align: center;
+            animation: caret-flicker 1s steps(1) infinite;
+        }
+
+        button {
+            background-color: var(--terminal-green);
+            color: var(--terminal-black);
+            border: none;
+            padding: 12px 25px;
+            margin: 10px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 5px var(--terminal-green);
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: var(--terminal-white);
+            color: var(--terminal-black);
+            box-shadow: 0 0 10px var(--terminal-white);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: var(--error-red);
+            margin-top: 20px;
+            font-weight: bold;
+            display: none;
+            animation: text-flicker var(--flicker-duration) infinite alternate;
+        }
+
+        .typing-effect::after {
+            content: '|';
+            animation: caret-flicker 1s steps(1) infinite;
+        }
+
+        @keyframes text-flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+            25%, 75% { opacity: 0.9; }
+        }
+
+        @keyframes caret-flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Animação para a transição de telas */
+        .screen.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        .screen.fade-in {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+        .screen.active.fade-in {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Screen 0: Welcome -->
+        <div id="screen0" class="screen active">
+            <h1 class="typing-effect">[ACCESS_PROTOCOL_ESTABLISHED]</h1>
+            <button onclick="nextScreen()">INICIAR IDENTIFICAÇÃO</button>
+        </div>
+
+        <!-- Screen 1: Identity -->
+        <div id="screen1" class="screen">
+            <p>Como o sistema deve registrar sua identidade?</p>
+            <input type="text" id="identityInput" placeholder="Sua identidade..." required>
+            <button onclick="nextScreen()">PRÓXIMO</button>
+        </div>
+
+        <!-- Screen 2: Firewall -->
+        <div id="screen2" class="screen">
+            <h1>[FIREWALL]: Qual é o código para descriptografar o acesso?</h1>
+            <div id="passwordButtons" class="button-group">
+                <!-- Buttons will be generated here by JavaScript -->
+            </div>
+            <p id="errorMessage" class="error-message">[ERRO_DE_SISTEMA]</p>
+        </div>
+
+        <!-- Screen 3: Data -->
+        <div id="screen3" class="screen">
+            <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
+            <form id="dataForm" action="" method="POST">
+                <input type="email" id="emailInput" name="email" placeholder="E-mail" required>
+                <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WhatsApp (DD NNNNN-NNNN)" pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" required>
+                <button type="submit">SINCRONIZAR DADOS</button>
+            </form>
+        </div>
+
+        <!-- Screen 4: Final -->
+        <div id="screen4" class="screen">
+            <h1 class="typing-effect">[ ACESSO LIBERADO ]</h1>
+            <button onclick="enterCommunity()">ENTRAR NA COMUNIDADE</button>
+        </div>
+    </div>
+
+    <script>
+        let currentScreen = 0;
+        const screens = document.querySelectorAll('.screen');
+        const errorMessage = document.getElementById('errorMessage');
+        const passwordButtonsContainer = document.getElementById('passwordButtons');
+        const correctSignature = '53 45 47 52 45 44 4F'; // The correct answer
+        const allSignatures = [
+            '45 47 52 45 44 4F 53',
+            '47 52 45 44 4F 53 45',
+            '53 45 47 52 45 44 4F', // This is the correct one
+            '52 45 44 4F 53 45 47',
+            '45 44 4F 53 45 47 52',
+            '43 32 30 32 34 2D 41', // Added more options for better randomization
+            '46 45 4C 49 58 41 4F'
+        ];
+        const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234';
+
+        function showScreen(index) {
+            screens.forEach((screen, i) => {
+                if (i === index) {
+                    screen.classList.remove('fade-out');
+                    screen.classList.add('active', 'fade-in');
+                } else {
+                    screen.classList.remove('active', 'fade-in');
+                    screen.classList.add('fade-out');
+                }
+            });
+            currentScreen = index;
+            errorMessage.style.display = 'none';
+
+            if (index === 2) { // When entering Screen 2 (Firewall)
+                generateRandomPasswordButtons();
+            }
+        }
+
+        function nextScreen() {
+            if (currentScreen === 1) { // Identity Screen
+                const identity = document.getElementById('identityInput').value.trim();
+                if (!identity) {
+                    alert('Por favor, insira sua identidade para continuar.');
+                    return;
+                }
+                // Store identity if needed, e.g., localStorage.setItem('user_identity', identity);
+            }
+            if (currentScreen < screens.length - 1) {
+                showScreen(currentScreen + 1);
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+            return array;
+        }
+
+        function generateRandomPasswordButtons() {
+            // Ensure the correct signature is always present, and pick 4 other random ones
+            let availableSignatures = allSignatures.filter(sig => sig !== correctSignature);
+            shuffleArray(availableSignatures);
+            let selectedSignatures = availableSignatures.slice(0, 4); // Take 4 random incorrect
+            selectedSignatures.push(correctSignature); // Add the correct one
+            shuffleArray(selectedSignatures); // Shuffle again to randomize position of correct answer
+
+            passwordButtonsContainer.innerHTML = ''; // Clear previous buttons
+            selectedSignatures.forEach(signature => {
+                const button = document.createElement('button');
+                button.textContent = signature;
+                button.onclick = () => checkPassword(signature);
+                passwordButtonsContainer.appendChild(button);
+            });
+        }
+
+        function checkPassword(signature) {
+            if (signature === correctSignature) {
+                nextScreen();
+            } else {
+                errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                    showScreen(0); // Reset to welcome screen
+                }, 1500); // Show error for 1.5 seconds then reset
+            }
+        }
+
+        // --- Email Sending Logic (CLIENT-SIDE SIMULATION) ---
+        // IMPORTANT: Real email sending must be done from a server-side script.
+        // This client-side form submission will just log to console or send to a placeholder.
+        document.getElementById('dataForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const email = document.getElementById('emailInput').value;
+            const whatsapp = document.getElementById('whatsappInput').value;
+
+            console.log(`Dados para envio: E-mail: ${email}, WhatsApp: ${whatsapp}`);
+            console.log(`Simulando envio de e-mail com link para: ${whatsappInviteLink} para ${email}`);
+
+            // You would typically send this data to a backend server like this:
+            /*
+            fetch('/send-community-link', { // Replace with your actual backend endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email, whatsapp: whatsapp, link: whatsappInviteLink }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Link da comunidade enviado para o seu e-mail!');
+                    nextScreen(); // Advance to final screen
+                } else {
+                    alert('Erro ao enviar o link. Tente novamente.');
+                }
+            })
+            .catch((error) => {
+                console.error('Erro na requisição:', error);
+                alert('Erro na comunicação com o servidor. Tente novamente.');
+            });
+            */
+
+            // For this client-side only example, we just proceed after "sending"
+            alert('Link da comunidade enviado para o seu e-mail (simulado)!');
+            nextScreen(); // Advance to final screen
+        });
+
+        function enterCommunity() {
+            // Optionally, if the user didn't receive the email, provide the link directly here.
+            alert('Bem-vindo à comunidade! O link foi enviado para o seu e-mail.');
+            // window.open(whatsappInviteLink, '_blank'); // Uncomment to open link directly
+        }
+
+        // Initialize first screen with typing effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const welcomeText = document.querySelector('#screen0 h1');
+            const originalWelcomeText = welcomeText.textContent;
+            welcomeText.textContent = ''; // Clear text for typing effect
+            let i = 0;
+            function typeWriterWelcome() {
+                if (i < originalWelcomeText.length) {
+                    welcomeText.textContent += originalWelcomeText.charAt(i);
+                    i++;
+                    setTimeout(typeWriterWelcome, 70); // Adjust typing speed
+                } else {
+                    welcomeText.classList.remove('typing-effect'); // Remove caret after typing
+                }
+            }
+            typeWriterWelcome();
+        });
+
+        // Add typing effect to final screen and handle screen changes
+        const screenObservers = [];
+        screens.forEach((screen, index) => {
+            const observer = new MutationObserver((mutationsList) => {
+                for (let mutation of mutationsList) {
+                    if (mutation.attributeName === 'class' && screen.classList.contains('active')) {
+                        // Handle typing effect for Screen 4
+                        if (index === 4) {
+                            const finalScreenText = screen.querySelector('h1');
+                            if (finalScreenText && !finalScreenText.hasAttribute('data-original-text')) {
+                                finalScreenText.setAttribute('data-original-text', finalScreenText.textContent);
+                            }
+                            if (finalScreenText && finalScreenText.getAttribute('data-original-text')) {
+                                finalScreenText.textContent = ''; // Clear again
+                                let i = 0;
+                                const originalText = finalScreenText.getAttribute('data-original-text');
+                                finalScreenText.classList.add('typing-effect'); // Add caret
+                                function typeWriterFinal() {
+                                    if (i < originalText.length) {
+                                        finalScreenText.textContent += originalText.charAt(i);
+                                        i++;
+                                        setTimeout(typeWriterFinal, 70);
+                                    } else {
+                                        finalScreenText.classList.remove('typing-effect');
+                                    }
+                                }
+                                typeWriterFinal();
+                            }
+                        }
+                    }
+                }
+            });
+            observer.observe(screen, { attributes: true });
+            screenObservers.push(observer);
+        });
+
+        // Initial generation of password buttons when the page loads (before screen 2 is shown, for setup)
+        // This will be called again when screen 2 is truly activated.
+        generateRandomPasswordButtons();
+    </script>
+</body>
+</html>
