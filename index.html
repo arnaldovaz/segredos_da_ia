@@ -168,9 +168,15 @@
         <!-- Screen 3: Data -->
         <div id="screen3" class="screen">
             <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
-            <form id="dataForm" action="a7o79i9nhdlfdxyfoqcq52el2upy8rqd@hook.us2.make.com" method="POST">
-                <input type="email" id="emailInput" name="email" placeholder="E-mail" required>
-                <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WhatsApp (DD NNNNN-NNNN)" pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" required>
+            <p style="font-size: 0.8em; margin-bottom: 20px;">Insira seus dados para sincronização de rede:</p>
+            
+            <form id="dataForm" action="https://hook.us2.make.com/a7o79i9nhdlfdxyfoqcq52el2upy8rqd" method="POST">
+                <input type="text" id="fullNameInput" name="sender_name" placeholder="NOME_COMPLETO" required>
+                
+                <input type="email" id="emailInput" name="sender_email" placeholder="EMAIL_DE_ACESSO" required>
+                
+                <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WHATSAPP (DD NNNNN-NNNN)" pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" required>
+                
                 <button type="submit">SINCRONIZAR DADOS</button>
             </form>
         </div>
@@ -268,51 +274,52 @@
             }
         }
 
-        // --- Email Sending Logic (CLIENT-SIDE SIMULATION) ---
-        // IMPORTANT: Real email sending must be done from a server-side script.
-        // This client-side form submission will just log to console or send to a placeholder.
+        // --- Make.com Integration Logic (using fetch for SPA) ---
         document.getElementById('dataForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission
-
+            event.preventDefault(); // Prevent default form submission to keep SPA
+            
+            const fullName = document.getElementById('fullNameInput').value;
             const email = document.getElementById('emailInput').value;
             const whatsapp = document.getElementById('whatsappInput').value;
 
-            console.log(`Dados para envio: E-mail: ${email}, WhatsApp: ${whatsapp}`);
-            console.log(`Simulando envio de e-mail com link para: ${whatsappInviteLink} para ${email}`);
+            // Prepare data as a FormData object (for Make.com webhook)
+            const formData = new FormData();
+            formData.append('sender_name', fullName);
+            formData.append('sender_email', email);
+            formData.append('whatsapp', whatsapp);
+            formData.append('community_link', whatsappInviteLink); // Send the community link as well
 
-            // You would typically send this data to a backend server like this:
-            /*
-            fetch('/send-community-link', { // Replace with your actual backend endpoint
+            console.log("Enviando dados para Make.com:", Object.fromEntries(formData));
+
+            fetch(this.action, { // 'this.action' refers to the form's action URL
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email: email, whatsapp: whatsapp, link: whatsappInviteLink }),
+                body: formData // Send as FormData, Make.com webhooks usually prefer this
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Link da comunidade enviado para o seu e-mail!');
-                    nextScreen(); // Advance to final screen
-                } else {
-                    alert('Erro ao enviar o link. Tente novamente.');
+            .then(response => {
+                // Make.com webhooks usually return a 200 OK with "Accepted" text
+                // You might need to check the exact response from your Make.com scenario
+                if (response.ok) {
+                    return response.text(); // Or response.json() if your webhook returns JSON
                 }
+                throw new Error('Erro na comunicação com Make.com');
+            })
+            .then(data => {
+                console.log('Resposta do Make.com:', data);
+                alert('Seus dados foram sincronizados! O link da comunidade foi enviado para o seu e-mail.');
+                nextScreen(); // Advance to final screen after successful submission
             })
             .catch((error) => {
-                console.error('Erro na requisição:', error);
-                alert('Erro na comunicação com o servidor. Tente novamente.');
+                console.error('Erro ao enviar dados para Make.com:', error);
+                alert('Erro ao sincronizar dados. Tente novamente ou verifique sua conexão.');
             });
-            */
-
-            // For this client-side only example, we just proceed after "sending"
-            alert('Link da comunidade enviado para o seu e-mail (simulado)!');
-            nextScreen(); // Advance to final screen
         });
 
         function enterCommunity() {
-            // Optionally, if the user didn't receive the email, provide the link directly here.
+            // Se o usuário já recebeu o email, ele pode ir direto.
+            // Aqui, apenas confirmamos que o link foi enviado.
             alert('Bem-vindo à comunidade! O link foi enviado para o seu e-mail.');
-            // window.open(whatsappInviteLink, '_blank'); // Uncomment to open link directly
+            // Se quiser abrir o link diretamente após o ENTER, descomente a linha abaixo:
+            // window.open(whatsappInviteLink, '_blank');
         }
 
         // Initialize first screen with typing effect
@@ -374,4 +381,5 @@
         generateRandomPasswordButtons();
     </script>
 </body>
+</html>
 </html>
