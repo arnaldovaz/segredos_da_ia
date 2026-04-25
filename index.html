@@ -113,13 +113,12 @@
             text-transform: uppercase;
         }
 
-        /* Removendo estilo de disabled para o teste */
-        /* button:disabled {
+        button:disabled {
             background-color: #333;
             color: #666;
             cursor: not-allowed;
             box-shadow: none;
-        } */
+        }
 
         button:hover:not(:disabled) {
             background-color: var(--terminal-white);
@@ -155,6 +154,7 @@
             max-width: 400px;
             font-size: 0.9em;
             line-height: 1.4;
+            position: relative; /* Para a mensagem de aviso */
         }
         .lgpd-box input[type="checkbox"] {
             margin-right: 10px;
@@ -165,6 +165,15 @@
             align-items: center;
             cursor: pointer;
             font-size: 1em;
+        }
+        
+        /* Estilo para a mensagem de LGPD */
+        .lgpd-warning {
+            color: var(--error-red);
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: none; /* Escondida por padrão */
         }
 
         @keyframes text-flicker {
@@ -222,9 +231,10 @@
                 <label>
                     <input type="checkbox" id="lgpdConsent"> Aceito os termos e condições.
                 </label>
+                <div id="lgpdWarning" class="lgpd-warning">Você deve aceitar os termos de privacidade para continuar.</div>
             </div>
-            <!-- Removendo o atributo disabled inicial para teste -->
-            <button id="lgpdButton" onclick="handleButtonClick(this)">CONTINUAR</button>
+            <!-- Botão desativado por padrão no HTML -->
+            <button id="lgpdButton" onclick="handleButtonClick(this)" disabled>CONTINUAR</button>
         </div>
 
         <!-- Screen 0: Welcome -->
@@ -285,45 +295,58 @@
 
         const lgpdConsentCheckbox = document.getElementById('lgpdConsent');
         const lgpdButton = document.getElementById('lgpdButton');
+        const lgpdWarning = document.getElementById('lgpdWarning'); // Nova div de aviso
 
         lgpdConsentCheckbox.addEventListener('change', function() {
-            // lgpdButton.disabled = !this.checked; // REMOVIDO PARA TESTE
+            console.log("Checkbox LGPD alterado. Checked:", this.checked);
+            lgpdButton.disabled = !this.checked;
+            lgpdWarning.style.display = this.checked ? 'none' : 'block'; // Mostra/esconde aviso
         });
 
-        // Funções disableButton e enableButton temporariamente esvaziadas para teste
+        // Função para desativar um botão
         function disableButton(button) {
-            // if (button) { button.disabled = true; } 
+            if (button) {
+                console.log(`Desativando botão: ${button.id || button.textContent}`);
+                button.disabled = true;
+            }
         }
 
+        // Função para ativar um botão
         function enableButton(button) {
-            // if (button) { button.disabled = false; }
+            if (button) {
+                console.log(`Ativando botão: ${button.id || button.textContent}`);
+                button.disabled = false;
+            }
         }
 
+        // Nova função para lidar com cliques nos botões de navegação
         function handleButtonClick(button) {
-            // disableButton(button); // Desativando chamada para teste
+            console.log(`Botão clicado: ${button.id || button.textContent}`);
+            disableButton(button); // Desativa o botão imediatamente ao clique
 
             // A lógica de transição e validação
             if (button === lgpdButton) { // Botão CONTINUAR da LGPD
                 if (!lgpdConsentCheckbox.checked) {
-                    alert('Você deve aceitar os termos de privacidade para continuar.');
-                    // enableButton(button); // Reativando chamada para teste
+                    lgpdWarning.style.display = 'block'; // Mostra o aviso
+                    enableButton(button); // Reativa o botão se a validação falhar
                     return;
                 }
+                lgpdWarning.style.display = 'none'; // Esconde o aviso se aceito
                 showScreen(0);
             } else if (currentScreen === 0) { // Botão INICIAR IDENTIFICAÇÃO da Screen 0
                 showScreen(1); // Vai para a Screen 1 (Identidade)
             } else if (currentScreen === 1) { // Botão PRÓXIMO da Screen 1 (Identidade)
                 const identity = document.getElementById('identityInput').value.trim();
                 if (!identity) {
-                    alert('Por favor, insira sua identidade para continuar.');
-                    // enableButton(button); // Reativando chamada para teste
+                    alert('Por favor, insira sua identidade para continuar.'); // Ainda usando alert para este caso
+                    enableButton(button); // Reativa o botão se a validação falhar
                     return;
                 }
                 showScreen(2); // Vai para a Screen 2 (Firewall)
             } else if (currentScreen === 3 && button.type === 'submit') { // Botão SINCRONIZAR DADOS da Screen 3
                 const form = document.getElementById('dataForm');
                 if (!form.checkValidity()) { 
-                    // enableButton(button); // Reativando chamada para teste
+                    enableButton(button); // Reativa o botão se o form for inválido
                     return;
                 }
                 form.dispatchEvent(new Event('submit', {cancelable: true}));
@@ -331,6 +354,7 @@
         }
 
         function showScreen(index) {
+            console.log(`Mostrando tela: ${index}`);
             screens.forEach((screen, i) => {
                 screen.classList.remove('initial-active'); 
                 if (i === index) {
@@ -344,77 +368,89 @@
             currentScreen = index;
             errorMessage.style.display = 'none';
 
-            // Reinicia efeitos de digitação
-            if (index === 0) { 
-                const welcomeText = document.querySelector('#screen0 h1');
-                if (welcomeText) {
-                    const originalWelcomeText = welcomeText.getAttribute('data-original-text') || welcomeText.textContent;
-                    welcomeText.setAttribute('data-original-text', originalWelcomeText);
-                    welcomeText.textContent = ''; 
-                    let i = 0;
-                    function typeWriterWelcome() {
-                        if (i < originalWelcomeText.length) {
-                            welcomeText.textContent += originalWelcomeText.charAt(i);
-                            i++;
-                            setTimeout(typeWriterWelcome, 70);
-                        } else {
-                            welcomeText.classList.remove('typing-effect');
-                        }
-                    }
-                    typeWriterWelcome();
-                }
-            } else if (index === 4) { 
-                 const finalScreenText = document.querySelector('#screen4 h1');
-                 const finalScreenParagraph = document.querySelector('#screen4 p');
-
-                 if (finalScreenText && finalScreenText.hasAttribute('data-original-text')) {
-                     finalScreenText.textContent = ''; 
-                     let i = 0;
-                     const originalText = finalScreenText.getAttribute('data-original-text');
-                     finalScreenText.classList.add('typing-effect'); 
-                     function typeWriterFinal() {
-                         if (i < originalText.length) {
-                             finalScreenText.textContent += originalText.charAt(i);
-                             i++;
-                             setTimeout(typeWriterFinal, 70);
-                         } else {
-                             finalScreenText.classList.remove('typing-effect');
-                             if (finalScreenParagraph) {
-                                 const originalParagraphText = finalScreenParagraph.getAttribute('data-original-text') || finalScreenParagraph.textContent;
-                                 finalScreenParagraph.setAttribute('data-original-text', originalParagraphText);
-                                 finalScreenParagraph.textContent = ''; 
-                                 finalScreenParagraph.classList.add('typing-effect');
-                                 let p_i = 0;
-                                 function typeWriterParagraph() {
-                                     if (p_i < originalParagraphText.length) {
-                                         finalScreenParagraph.textContent += originalParagraphText.charAt(p_i);
-                                         p_i++;
-                                         setTimeout(typeWriterParagraph, 30); 
-                                     } else {
-                                         finalScreenParagraph.classList.remove('typing-effect');
-                                     }
-                                 }
-                                 typeWriterParagraph();
-                             }
-                         }
-                     }
-                     typeWriterFinal();
-                 }
-            } else if (index === 2) { 
-                generateRandomPasswordButtons();
-            }
-
-            // Ativa todos os botões da nova tela ativa (sem usar disableButton/enableButton para teste)
+            // Reinicia efeitos de digitação e ativa botões da nova tela
             const activeScreenElement = screens[index];
             if (activeScreenElement) {
                 activeScreenElement.querySelectorAll('button').forEach(btn => {
-                    // btn.disabled = false; // Removido para teste
+                    // Lógica específica para o botão LGPD
+                    if (btn.id === 'lgpdButton') {
+                        btn.disabled = !lgpdConsentCheckbox.checked; 
+                        lgpdWarning.style.display = lgpdConsentCheckbox.checked ? 'none' : 'block';
+                    } else {
+                        enableButton(btn); // Ativa outros botões
+                    }
                 });
+
+                // Lógica de digitação para a tela 0
+                if (index === 0) { 
+                    const welcomeText = activeScreenElement.querySelector('h1');
+                    if (welcomeText) {
+                        const originalWelcomeText = welcomeText.getAttribute('data-original-text') || welcomeText.textContent;
+                        welcomeText.setAttribute('data-original-text', originalWelcomeText);
+                        welcomeText.textContent = ''; 
+                        let i = 0;
+                        function typeWriterWelcome() {
+                            if (i < originalWelcomeText.length) {
+                                welcomeText.textContent += originalWelcomeText.charAt(i);
+                                i++;
+                                setTimeout(typeWriterWelcome, 70);
+                            } else {
+                                welcomeText.classList.remove('typing-effect');
+                            }
+                        }
+                        typeWriterWelcome();
+                    }
+                } 
+                // Lógica de digitação para a tela 4
+                else if (index === 4) { 
+                     const finalScreenText = activeScreenElement.querySelector('h1');
+                     const finalScreenParagraph = activeScreenElement.querySelector('p');
+
+                     if (finalScreenText && finalScreenText.hasAttribute('data-original-text')) {
+                         finalScreenText.textContent = ''; 
+                         let i = 0;
+                         const originalText = finalScreenText.getAttribute('data-original-text');
+                         finalScreenText.classList.add('typing-effect'); 
+                         function typeWriterFinal() {
+                             if (i < originalText.length) {
+                                 finalScreenText.textContent += originalText.charAt(i);
+                                 i++;
+                                 setTimeout(typeWriterFinal, 70);
+                             } else {
+                                 finalScreenText.classList.remove('typing-effect');
+                                 if (finalScreenParagraph) {
+                                     const originalParagraphText = finalScreenParagraph.getAttribute('data-original-text') || finalScreenParagraph.textContent;
+                                     finalScreenParagraph.setAttribute('data-original-text', originalParagraphText);
+                                     finalScreenParagraph.textContent = ''; 
+                                     finalScreenParagraph.classList.add('typing-effect');
+                                     let p_i = 0;
+                                     function typeWriterParagraph() {
+                                         if (p_i < originalParagraphText.length) {
+                                             finalScreenParagraph.textContent += originalParagraphText.charAt(p_i);
+                                             p_i++;
+                                             setTimeout(typeWriterParagraph, 30); 
+                                         } else {
+                                             finalScreenParagraph.classList.remove('typing-effect');
+                                         }
+                                     }
+                                     typeWriterParagraph();
+                                 }
+                             }
+                         }
+                         typeWriterFinal();
+                     }
+                } 
+                // Geração de botões de senha para a tela 2
+                else if (index === 2) { 
+                    generateRandomPasswordButtons();
+                }
             }
         }
 
         function checkPassword(signature) {
-            // passwordButtonsContainer.querySelectorAll('button').forEach(btn => disableButton(btn)); // Removido para teste
+            console.log(`Checando senha: ${signature}`);
+            // Desativa os botões de senha temporariamente
+            passwordButtonsContainer.querySelectorAll('button').forEach(btn => disableButton(btn));
 
             if (signature === correctSignature) {
                 showScreen(3); 
@@ -422,15 +458,16 @@
                 errorMessage.style.display = 'block';
                 setTimeout(() => {
                     errorMessage.style.display = 'none';
-                    showScreen(-1); 
+                    showScreen(-1); // Reset to LGPD screen on error
                 }, 1500);
             }
         }
 
         document.getElementById('dataForm').addEventListener('submit', function(event) {
+            console.log("Formulário de dados submetido.");
             event.preventDefault(); 
             const submitButton = this.querySelector('button[type="submit"]');
-            // disableButton(submitButton); // Removido para teste
+            disableButton(submitButton); 
 
             const email = document.getElementById('emailInput').value;
             const whatsapp = document.getElementById('whatsappInput').value;
@@ -482,14 +519,16 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            currentScreen = -1; 
+            console.log("DOM totalmente carregado. Inicializando...");
+            currentScreen = -1; // LGPD é a primeira tela lógica
             const lgpdScreen = document.getElementById('screen0-lgpd');
             if (lgpdScreen) {
-                lgpdScreen.classList.remove('active'); 
+                lgpdScreen.classList.remove('active'); // Garante que initial-active seja o mestre
             }
             
-            generateRandomPasswordButtons(); 
+            generateRandomPasswordButtons(); // Gera os botões de senha na inicialização
 
+            // Pre-set data-original-text for typing effects
             const welcomeText = document.querySelector('#screen0 h1');
             if (welcomeText) {
                 welcomeText.setAttribute('data-original-text', welcomeText.textContent);
@@ -502,9 +541,10 @@
             if (finalScreenParagraph) {
                 finalScreenParagraph.setAttribute('data-original-text', finalScreenParagraph.textContent);
             }
-            
-            // Inicializa o estado do botão LGPD baseado no checkbox, mas sem usar 'disabled' ainda para o teste
-            // lgpdButton.disabled = !lgpdConsentCheckbox.checked; // REMOVIDO PARA TESTE
+
+            // Garante o estado inicial correto do botão LGPD
+            lgpdButton.disabled = !lgpdConsentCheckbox.checked;
+            lgpdWarning.style.display = lgpdConsentCheckbox.checked ? 'none' : 'block';
         });
     </script>
 </body>
