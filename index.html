@@ -1,551 +1,236 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HACKEANDO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --terminal-green: #00FF00;
-            --terminal-white: #FFFFFF;
-            --terminal-black: #000000;
-            --error-red: #FF0000;
-            --flicker-duration: 0.1s;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:#00FF00;font-family:'Roboto Mono',monospace;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden;flex-direction:column;text-align:center}
+.container{width:95%;max-width:600px;padding:15px}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:200px;width:100%}
+.screen.active{display:flex}
 
-        body {
-            background-color: var(--terminal-black);
-            color: var(--terminal-green);
-            font-family: 'Roboto Mono', monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            flex-direction: column;
-            text-align: center;
-        }
+h1{
+  color:#00FF00;
+  font-size:1.6em;
+  margin-bottom:20px;
+  word-break:break-word;
+  line-height:1.3;
+  text-shadow:0 0 8px #00FF00, 0 0 20px #00cc00;
+  animation:flicker .1s infinite alternate;
+}
+p{color:#00FF00;margin-bottom:15px;font-size:1em}
 
-        .container {
-            width: 95%; /* Maior largura para mobile */
-            max-width: 600px;
-            padding: 15px; /* Menor padding para mobile */
-            box-sizing: border-box;
-        }
+input[type="text"],input[type="email"],input[type="tel"]{
+  background:transparent;
+  border:1px solid #00FF00;
+  color:#00FF00;
+  padding:10px;
+  margin:10px 0;
+  width:100%;
+  max-width:300px;
+  font-family:'Roboto Mono',monospace;
+  font-size:1em;
+  outline:none;
+  text-align:center;
+  border-radius:0;
+}
+input::placeholder{color:#008800}
 
-        .screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px; /* Garante altura mínima para centralização vertical */
-            width: 100%; /* Garante que ocupe a largura do container */
-        }
+/* Botão ATIVO */
+button{
+  background:#00FF00;
+  color:#000;
+  border:none;
+  border-radius:0;
+  padding:12px 25px;
+  margin:10px;
+  font-family:'Roboto Mono',monospace;
+  font-size:1em;
+  cursor:pointer;
+  text-transform:uppercase;
+  box-shadow:none;
+  transition:background .2s, color .2s;
+}
+button:hover:not(:disabled){
+  background:#fff;
+  color:#000;
+}
 
-        /* Garante que a primeira tela esteja ativa inicialmente, mesmo sem JS */
-        .screen.initial-active {
-            display: flex;
-        }
+/* Botão DESABILITADO — fundo escuro, sem glow, texto esverdeado apagado */
+button:disabled{
+  background:#0a1a0a;
+  color:#1a4a1a;
+  border:1px solid #1a4a1a;
+  cursor:not-allowed;
+  box-shadow:none;
+}
 
-        .screen.active { /* Esta classe ainda será usada pelo JS para controle dinâmico */
-            display: flex;
-        }
+.button-group{display:flex;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.error-message{color:#FF0000;margin-top:20px;font-weight:bold;display:none;text-shadow:0 0 6px #FF0000;animation:flicker .1s infinite alternate}
 
-        h1, h2 {
-            font-size: 1.6em; /* Ajuste para mobile */
-            margin-bottom: 20px;
-            animation: text-flicker var(--flicker-duration) infinite alternate;
-            word-break: break-word; /* Garante quebra de palavra em telas pequenas */
-            text-wrap: balance; /* Tenta equilibrar as linhas */
-            line-height: 1.2; /* Ajusta espaçamento entre linhas */
-        }
+/* LGPD box — verde escuro de fundo, borda verde */
+.lgpd-box{
+  background:#001400;
+  border:1px solid #00FF00;
+  padding:20px;
+  margin-bottom:20px;
+  max-width:480px;
+  width:100%;
+  font-size:.95em;
+  line-height:1.5;
+  border-radius:0;
+  text-align:left;
+}
+.lgpd-box p{margin-bottom:14px;color:#00FF00}
+.lgpd-box label{display:flex;align-items:center;cursor:pointer;font-size:1em;color:#00FF00}
+.lgpd-box input[type="checkbox"]{margin-right:10px;accent-color:#00FF00;width:18px;height:18px}
+.lgpd-warning{color:#FF0000;font-weight:bold;font-size:.9em;margin-top:12px;display:none;text-shadow:0 0 4px #FF0000}
 
-        /* Ajuste específico para o h1 de boas-vindas para forçar quebra de linha por palavra */
-        #screen0 h1 {
-            white-space: pre-wrap; /* Preserva espaços e quebra linhas */
-            font-size: 1.4em; /* Reduz um pouco o tamanho para ajudar na quebra */
-        }
-
-
-        p {
-            margin-bottom: 15px;
-            font-size: 1em; /* Ajuste para mobile */
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"] {
-            background-color: transparent;
-            border: 1px solid var(--terminal-green);
-            color: var(--terminal-green);
-            padding: 10px;
-            margin: 10px 0;
-            width: 100%;
-            max-width: 300px;
-            box-sizing: border-box;
-            font-family: 'Roboto Mono', monospace;
-            font-size: 1em;
-            outline: none;
-            text-align: center;
-        }
-        
-        input:not(:focus):empty-value {
-            animation: caret-flicker 1s steps(1) infinite;
-        }
-
-        input.no-flicker {
-            animation: none;
-        }
-
-        button {
-            background-color: var(--terminal-green);
-            color: var(--terminal-black);
-            border: none;
-            padding: 12px 25px;
-            margin: 10px;
-            font-family: 'Roboto Mono', monospace;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 0 5px var(--terminal-green);
-            text-transform: uppercase;
-        }
-
-        button:disabled {
-            background-color: #333;
-            color: #666;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: var(--terminal-white);
-            color: var(--terminal-black);
-            box-shadow: 0 0 10px var(--terminal-white);
-        }
-
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .error-message {
-            color: var(--error-red);
-            margin-top: 20px;
-            font-weight: bold;
-            display: none;
-            animation: text-flicker var(--flicker-duration) infinite alternate;
-        }
-
-        .typing-effect::after {
-            content: '|';
-            animation: caret-flicker 1s steps(1) infinite;
-        }
-
-        .lgpd-box {
-            background-color: rgba(0, 255, 0, 0.1);
-            border: 1px solid var(--terminal-green);
-            padding: 20px;
-            margin-bottom: 20px;
-            max-width: 400px;
-            font-size: 0.9em;
-            line-height: 1.4;
-            position: relative; /* Para a mensagem de aviso */
-        }
-        .lgpd-box input[type="checkbox"] {
-            margin-right: 10px;
-            accent-color: var(--terminal-green); /* Cor do checkbox */
-        }
-        .lgpd-box label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        
-        /* Estilo para a mensagem de LGPD */
-        .lgpd-warning {
-            color: var(--error-red);
-            font-weight: bold;
-            font-size: 0.9em;
-            margin-top: 10px;
-            display: none; /* Escondida por padrão */
-        }
-
-        @keyframes text-flicker {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-            25%, 75% { opacity: 0.9; }
-        }
-
-        @keyframes caret-flicker {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        /* Animação para a transição de telas */
-        .screen.fade-out {
-            opacity: 0;
-            transition: opacity 0.5s ease-out;
-        }
-        .screen.fade-in {
-            opacity: 0;
-            transition: opacity 0.5s ease-in;
-        }
-        .screen.active.fade-in {
-            opacity: 1;
-        }
-
-        /* Responsividade para fontes menores em telas muito pequenas */
-        @media (max-width: 400px) {
-            h1 {
-                font-size: 1.4em;
-            }
-            #screen0 h1 { /* Ajuste extra para telas muito pequenas */
-                font-size: 1.2em;
-            }
-            p {
-                font-size: 0.9em;
-            }
-            button {
-                padding: 10px 20px;
-                font-size: 0.9em;
-            }
-            .lgpd-box {
-                font-size: 0.8em;
-            }
-        }
-    </style>
+.caret::after{content:'|';animation:blink 1s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.88}}
+@media(max-width:400px){h1{font-size:1.2em}p{font-size:.9em}button{padding:10px 20px;font-size:.9em}.lgpd-box{font-size:.85em}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- New Screen 0-LGPD: Privacy Consent -->
-        <div id="screen0-lgpd" class="screen initial-active">
-            <h1>[PROTOCOLO_DE_PRIVACIDADE]</h1>
-            <div class="lgpd-box">
-                <p>Para continuar, você deve aceitar nossa política de tratamento de dados. Seus dados serão utilizados apenas para fins de comunicação sobre este acesso e comunidade.</p>
-                <label>
-                    <input type="checkbox" id="lgpdConsent"> Aceito os termos e condições.
-                </label>
-                <div id="lgpdWarning" class="lgpd-warning">Você deve aceitar os termos de privacidade para continuar.</div>
-            </div>
-            <!-- Botão desativado por padrão no HTML -->
-            <button id="lgpdButton" onclick="handleButtonClick(this)" disabled>CONTINUAR</button>
-        </div>
+<div class="container">
 
-        <!-- Screen 0: Welcome -->
-        <div id="screen0" class="screen">
-            <h1 class="typing-effect">[ACCESS_PROTOCOL_ESTABLISHED]</h1>
-            <button onclick="handleButtonClick(this)">INICIAR IDENTIFICAÇÃO</button>
-        </div>
-
-        <!-- Screen 1: Identity -->
-        <div id="screen1" class="screen">
-            <p>Como o sistema deve registrar sua identidade?</p>
-            <input type="text" id="identityInput" placeholder="Sua identidade..." required>
-            <button onclick="handleButtonClick(this)">PRÓXIMO</button>
-        </div>
-
-        <!-- Screen 2: Firewall -->
-        <div id="screen2" class="screen">
-            <h1>[FIREWALL]: Qual é o código para descriptografar o acesso?</h1>
-            <div id="passwordButtons" class="button-group">
-                <!-- Buttons will be generated here by JavaScript -->
-            </div>
-            <!-- Os botões de senha não precisam de handleButtonClick, eles chamam checkPassword diretamente -->
-            <p id="errorMessage" class="error-message">[ERRO_DE_SISTEMA]</p>
-        </div>
-
-        <!-- Screen 3: Data -->
-        <div id="screen3" class="screen">
-            <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
-            <form id="dataForm" action="SEU_ENDPOINT_MAUTIC_AQUI" method="POST"> <!-- ATENÇÃO: Preencher com seu seu endpoint Mautic -->
-                <input type="email" id="emailInput" name="email" placeholder="E-mail" required class="flicker-on-empty">
-                <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WhatsApp (DD NNNNN-NNNN)" 
-                       pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" 
-                       title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" 
-                       inputmode="numeric" class="flicker-on-empty" required>
-                <button type="submit" onclick="handleButtonClick(this)">SINCRONIZAR DADOS</button>
-            </form>
-        </div>
-
-        <!-- Screen 4: Final -->
-        <div id="screen4" class="screen">
-            <h1>[ ACESSO LIBERADO ]</h1>
-            <p>enviamos o link da comunidade para o seu email. esperamos você na comunidade. caso você não receba o email nos próximos cinco minutos favor enviar um email para <a href="mailto:segredosdaia@gmail.com" style="color: var(--terminal-green); text-decoration: underline;">segredosdaia@gmail.com</a>.</p>
-        </div>
+  <div id="screen-lgpd" class="screen active">
+    <h1>[PROTOCOLO_DE_PRIVACIDADE]</h1>
+    <div class="lgpd-box">
+      <p>Para continuar, você deve aceitar nossa política de tratamento de dados. Seus dados serão utilizados apenas para fins de comunicação sobre este acesso e comunidade.</p>
+      <label><input type="checkbox" id="lgpdConsent"> Aceito os termos e condições.</label>
+      <div id="lgpdWarning" class="lgpd-warning">Você deve aceitar os termos de privacidade para continuar.</div>
     </div>
+    <button id="lgpdButton" disabled onclick="goLGPD()">CONTINUAR</button>
+  </div>
 
-    <script>
-        let currentScreen = -1; 
-        const screens = document.querySelectorAll('.screen');
-        const errorMessage = document.getElementById('errorMessage');
-        const passwordButtonsContainer = document.getElementById('passwordButtons');
-        const correctSignature = '53 45 47 52 45 44 4F'; 
-        const allSignatures = [
-            '45 47 52 45 44 4F 53', '47 52 45 44 4F 53 45', '53 45 47 52 45 44 4F', 
-            '52 45 44 4F 53 45 47', '45 44 4F 53 45 47 52', '43 32 30 32 34 2D 41',
-            '46 45 4C 49 58 41 4F'
-        ];
-        const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234';
+  <div id="screen-welcome" class="screen">
+    <h1 id="welcomeTitle" class="caret"></h1>
+    <button id="btnIniciar" disabled onclick="goWelcome()">INICIAR IDENTIFICAÇÃO</button>
+  </div>
 
-        const lgpdConsentCheckbox = document.getElementById('lgpdConsent');
-        const lgpdButton = document.getElementById('lgpdButton');
-        const lgpdWarning = document.getElementById('lgpdWarning'); // Nova div de aviso
+  <div id="screen-identity" class="screen">
+    <p>Como o sistema deve registrar sua identidade?</p>
+    <input type="text" id="identityInput" placeholder="Sua identidade...">
+    <button onclick="goIdentity()">PRÓXIMO</button>
+  </div>
 
-        lgpdConsentCheckbox.addEventListener('change', function() {
-            console.log("Checkbox LGPD alterado. Checked:", this.checked);
-            lgpdButton.disabled = !this.checked;
-            lgpdWarning.style.display = this.checked ? 'none' : 'block'; // Mostra/esconde aviso
-        });
+  <div id="screen-firewall" class="screen">
+    <h1>[FIREWALL]: Qual é o código para descriptografar o acesso?</h1>
+    <div id="passwordButtons" class="button-group"></div>
+    <p id="errorMessage" class="error-message">[ERRO_DE_SISTEMA]</p>
+  </div>
 
-        // Função para desativar um botão
-        function disableButton(button) {
-            if (button) {
-                console.log(`Desativando botão: ${button.id || button.textContent}`);
-                button.disabled = true;
-            }
-        }
+  <div id="screen-data" class="screen">
+    <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
+    <input type="email" id="emailInput" placeholder="E-mail">
+    <input type="tel" id="whatsappInput" placeholder="WhatsApp (DD NNNNN-NNNN)" inputmode="numeric">
+    <button id="btnSync" onclick="goSync()">SINCRONIZAR DADOS</button>
+  </div>
 
-        // Função para ativar um botão
-        function enableButton(button) {
-            if (button) {
-                console.log(`Ativando botão: ${button.id || button.textContent}`);
-                button.disabled = false;
-            }
-        }
+  <div id="screen-final" class="screen">
+    <h1 id="finalTitle"></h1>
+    <p id="finalParagraph"></p>
+  </div>
 
-        // Nova função para lidar com cliques nos botões de navegação
-        function handleButtonClick(button) {
-            console.log(`Botão clicado: ${button.id || button.textContent}`);
-            disableButton(button); // Desativa o botão imediatamente ao clique
+</div>
+<script>
+const CORRECT='53 45 47 52 45 44 4F';
+const ALL_SIGS=['45 47 52 45 44 4F 53','47 52 45 44 4F 53 45','53 45 47 52 45 44 4F','52 45 44 4F 53 45 47','45 44 4F 53 45 47 52','43 32 30 32 34 2D 41','46 45 4C 49 58 41 4F'];
+const $=id=>document.getElementById(id);
 
-            // A lógica de transição e validação
-            if (button === lgpdButton) { // Botão CONTINUAR da LGPD
-                if (!lgpdConsentCheckbox.checked) {
-                    lgpdWarning.style.display = 'block'; // Mostra o aviso
-                    enableButton(button); // Reativa o botão se a validação falhar
-                    return;
-                }
-                lgpdWarning.style.display = 'none'; // Esconde o aviso se aceito
-                showScreen(0);
-            } else if (currentScreen === 0) { // Botão INICIAR IDENTIFICAÇÃO da Screen 0
-                showScreen(1); // Vai para a Screen 1 (Identidade)
-            } else if (currentScreen === 1) { // Botão PRÓXIMO da Screen 1 (Identidade)
-                const identity = document.getElementById('identityInput').value.trim();
-                if (!identity) {
-                    alert('Por favor, insira sua identidade para continuar.'); // Ainda usando alert para este caso
-                    enableButton(button); // Reativa o botão se a validação falhar
-                    return;
-                }
-                showScreen(2); // Vai para a Screen 2 (Firewall)
-            } else if (currentScreen === 3 && button.type === 'submit') { // Botão SINCRONIZAR DADOS da Screen 3
-                const form = document.getElementById('dataForm');
-                if (!form.checkValidity()) { 
-                    enableButton(button); // Reativa o botão se o form for inválido
-                    return;
-                }
-                form.dispatchEvent(new Event('submit', {cancelable: true}));
-            }
-        }
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('screen-'+name).classList.add('active');
+}
 
-        function showScreen(index) {
-            console.log(`Mostrando tela: ${index}`);
-            screens.forEach((screen, i) => {
-                screen.classList.remove('initial-active'); 
-                if (i === index) {
-                    screen.classList.remove('fade-out');
-                    screen.classList.add('active', 'fade-in');
-                } else {
-                    screen.classList.remove('active', 'fade-in');
-                    screen.classList.add('fade-out');
-                }
-            });
-            currentScreen = index;
-            errorMessage.style.display = 'none';
+$('lgpdConsent').addEventListener('change',function(){
+  $('lgpdButton').disabled=!this.checked;
+  $('lgpdWarning').style.display=this.checked?'none':'block';
+});
+function goLGPD(){
+  if(!$('lgpdConsent').checked){$('lgpdWarning').style.display='block';return;}
+  showScreen('welcome');
+  startWelcomeTyping();
+}
 
-            // Reinicia efeitos de digitação e ativa botões da nova tela
-            const activeScreenElement = screens[index];
-            if (activeScreenElement) {
-                activeScreenElement.querySelectorAll('button').forEach(btn => {
-                    // Lógica específica para o botão LGPD
-                    if (btn.id === 'lgpdButton') {
-                        btn.disabled = !lgpdConsentCheckbox.checked; 
-                        lgpdWarning.style.display = lgpdConsentCheckbox.checked ? 'none' : 'block';
-                    } else {
-                        enableButton(btn); // Ativa outros botões
-                    }
-                });
+let welcomeDone=false;
+function startWelcomeTyping(){
+  if(welcomeDone)return;
+  const el=$('welcomeTitle'),btn=$('btnIniciar');
+  btn.disabled=true;
+  el.classList.add('caret');
+  const text='[ACCESS_PROTOCOL_ESTABLISHED]';
+  let i=0;el.textContent='';
+  function step(){
+    if(i<text.length){el.textContent+=text[i++];setTimeout(step,65);}
+    else{el.classList.remove('caret');welcomeDone=true;btn.disabled=false;}
+  }
+  step();
+}
+function goWelcome(){showScreen('identity');}
 
-                // Lógica de digitação para a tela 0
-                if (index === 0) { 
-                    const welcomeText = activeScreenElement.querySelector('h1');
-                    if (welcomeText) {
-                        const originalWelcomeText = welcomeText.getAttribute('data-original-text') || welcomeText.textContent;
-                        welcomeText.setAttribute('data-original-text', originalWelcomeText);
-                        welcomeText.textContent = ''; 
-                        let i = 0;
-                        function typeWriterWelcome() {
-                            if (i < originalWelcomeText.length) {
-                                welcomeText.textContent += originalWelcomeText.charAt(i);
-                                i++;
-                                setTimeout(typeWriterWelcome, 70);
-                            } else {
-                                welcomeText.classList.remove('typing-effect');
-                            }
-                        }
-                        typeWriterWelcome();
-                    }
-                } 
-                // Lógica de digitação para a tela 4
-                else if (index === 4) { 
-                     const finalScreenText = activeScreenElement.querySelector('h1');
-                     const finalScreenParagraph = activeScreenElement.querySelector('p');
+function goIdentity(){
+  const val=$('identityInput').value.trim();
+  if(!val){alert('Por favor, insira sua identidade para continuar.');return;}
+  showScreen('firewall');
+  buildPasswordButtons();
+}
 
-                     if (finalScreenText && finalScreenText.hasAttribute('data-original-text')) {
-                         finalScreenText.textContent = ''; 
-                         let i = 0;
-                         const originalText = finalScreenText.getAttribute('data-original-text');
-                         finalScreenText.classList.add('typing-effect'); 
-                         function typeWriterFinal() {
-                             if (i < originalText.length) {
-                                 finalScreenText.textContent += originalText.charAt(i);
-                                 i++;
-                                 setTimeout(typeWriterFinal, 70);
-                             } else {
-                                 finalScreenText.classList.remove('typing-effect');
-                                 if (finalScreenParagraph) {
-                                     const originalParagraphText = finalScreenParagraph.getAttribute('data-original-text') || finalScreenParagraph.textContent;
-                                     finalScreenParagraph.setAttribute('data-original-text', originalParagraphText);
-                                     finalScreenParagraph.textContent = ''; 
-                                     finalScreenParagraph.classList.add('typing-effect');
-                                     let p_i = 0;
-                                     function typeWriterParagraph() {
-                                         if (p_i < originalParagraphText.length) {
-                                             finalScreenParagraph.textContent += originalParagraphText.charAt(p_i);
-                                             p_i++;
-                                             setTimeout(typeWriterParagraph, 30); 
-                                         } else {
-                                             finalScreenParagraph.classList.remove('typing-effect');
-                                         }
-                                     }
-                                     typeWriterParagraph();
-                                 }
-                             }
-                         }
-                         typeWriterFinal();
-                     }
-                } 
-                // Geração de botões de senha para a tela 2
-                else if (index === 2) { 
-                    generateRandomPasswordButtons();
-                }
-            }
-        }
+function buildPasswordButtons(){
+  const c=$('passwordButtons');
+  c.innerHTML='';
+  [...ALL_SIGS].sort(()=>Math.random()-.5).forEach(sig=>{
+    const b=document.createElement('button');
+    b.textContent=sig;
+    b.onclick=()=>checkPassword(sig);
+    c.appendChild(b);
+  });
+}
+function checkPassword(sig){
+  document.querySelectorAll('#passwordButtons button').forEach(b=>b.disabled=true);
+  if(sig===CORRECT){showScreen('data');}
+  else{
+    $('errorMessage').style.display='block';
+    setTimeout(()=>{$('errorMessage').style.display='none';showScreen('lgpd');},1500);
+  }
+}
 
-        function checkPassword(signature) {
-            console.log(`Checando senha: ${signature}`);
-            // Desativa os botões de senha temporariamente
-            passwordButtonsContainer.querySelectorAll('button').forEach(btn => disableButton(btn));
+$('whatsappInput').addEventListener('input',function(){
+  let v=this.value.replace(/\D/g,''),f='';
+  if(v.length>0){f+=v.substring(0,2);if(v.length>2){f+=' ';if(v.length>7)f+=v.substring(2,7)+'-'+v.substring(7,11);else f+=v.substring(2,10);}}
+  this.value=f;
+});
+function goSync(){
+  const email=$('emailInput').value.trim(),wa=$('whatsappInput').value.trim();
+  if(!email||!wa){alert('Preencha e-mail e WhatsApp para continuar.');return;}
+  $('btnSync').disabled=true;
+  setTimeout(()=>{showScreen('final');startFinalTyping();},800);
+}
 
-            if (signature === correctSignature) {
-                showScreen(3); 
-            } else {
-                errorMessage.style.display = 'block';
-                setTimeout(() => {
-                    errorMessage.style.display = 'none';
-                    showScreen(-1); // Reset to LGPD screen on error
-                }, 1500);
-            }
-        }
-
-        document.getElementById('dataForm').addEventListener('submit', function(event) {
-            console.log("Formulário de dados submetido.");
-            event.preventDefault(); 
-            const submitButton = this.querySelector('button[type="submit"]');
-            disableButton(submitButton); 
-
-            const email = document.getElementById('emailInput').value;
-            const whatsapp = document.getElementById('whatsappInput').value;
-
-            console.log(`Dados para envio: E-mail: ${email}, WhatsApp: ${whatsapp}`);
-            console.log(`Simulando envio de e-mail com link para: ${whatsappInviteLink} para ${email}`);
-
-            setTimeout(() => { 
-                alert('Link da comunidade enviado para o seu e-mail (simulado)!');
-                showScreen(4); 
-            }, 1000); 
-        });
-
-        function formatPhoneNumber(input) {
-            let value = input.value.replace(/\D/g, ''); 
-            let formattedValue = '';
-
-            if (value.length > 0) {
-                formattedValue += value.substring(0, 2); 
-                if (value.length > 2) {
-                    formattedValue += ' ';
-                    if (value.length > 7) { 
-                        formattedValue += value.substring(2, 7) + '-' + value.substring(7, 11);
-                    } else if (value.length > 6) {
-                         formattedValue += value.substring(2, 6) + '-' + value.substring(6, 10);
-                    } else {
-                        formattedValue += value.substring(2, 10);
-                    }
-                }
-            }
-            input.value = formattedValue.trim();
-        }
-
-        document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]').forEach(input => {
-            input.addEventListener('input', function() {
-                if (this.value.trim() !== '') {
-                    this.classList.add('no-flicker');
-                } else {
-                    this.classList.remove('no-flicker');
-                }
-            });
-            if (input.value.trim() !== '') {
-                input.classList.add('no-flicker');
-            }
-        });
-
-        document.getElementById('whatsappInput').addEventListener('input', function() {
-            formatPhoneNumber(this);
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM totalmente carregado. Inicializando...");
-            currentScreen = -1; // LGPD é a primeira tela lógica
-            const lgpdScreen = document.getElementById('screen0-lgpd');
-            if (lgpdScreen) {
-                lgpdScreen.classList.remove('active'); // Garante que initial-active seja o mestre
-            }
-            
-            generateRandomPasswordButtons(); // Gera os botões de senha na inicialização
-
-            // Pre-set data-original-text for typing effects
-            const welcomeText = document.querySelector('#screen0 h1');
-            if (welcomeText) {
-                welcomeText.setAttribute('data-original-text', welcomeText.textContent);
-            }
-            const finalScreenText = document.querySelector('#screen4 h1');
-            if (finalScreenText) {
-                finalScreenText.setAttribute('data-original-text', finalScreenText.textContent);
-            }
-            const finalScreenParagraph = document.querySelector('#screen4 p');
-            if (finalScreenParagraph) {
-                finalScreenParagraph.setAttribute('data-original-text', finalScreenParagraph.textContent);
-            }
-
-            // Garante o estado inicial correto do botão LGPD
-            lgpdButton.disabled = !lgpdConsentCheckbox.checked;
-            lgpdWarning.style.display = lgpdConsentCheckbox.checked ? 'none' : 'block';
-        });
-    </script>
+function startFinalTyping(){
+  const h1=$('finalTitle'),p=$('finalParagraph');
+  const t1='[ ACESSO LIBERADO ]';
+  const t2 = '<p>Enviamos o link da comunidade para o seu email.</p>' +
+           '<p>Esperamos você na comunidade.</p>' +
+           '<p>Caso você não receba o email nos próximos cinco minutos, favor enviar um email para SEGREDOSDAIA@gmail.com.</p>';
+  h1.textContent='';p.textContent='';
+  h1.classList.add('caret');
+  let i=0;
+  function typeH1(){
+    if(i<t1.length){h1.textContent+=t1[i++];setTimeout(typeH1,70);}
+    else{h1.classList.remove('caret');typeP();}
+  }
+  function typeP(){
+    p.classList.add('caret');let j=0;
+    function step(){if(j<t2.length){p.textContent+=t2[j++];setTimeout(step,28);}else p.classList.remove('caret');}
+    step();
+  }
+  typeH1();
+}
+</script>
 </body>
 </html>
