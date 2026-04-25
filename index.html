@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -212,44 +213,22 @@ function goSync(){
 }
 
 function startFinalTyping(){
-  const h1 = $('finalTitle'), p = $('finalParagraph');
-  const t1 = '[ ACESSO LIBERADO ]';
-  // Removi as tags <p> da string para o efeito de digitação funcionar melhor
-  const t2 = 'Enviamos o link da comunidade para o seu email.\n\nEsperamos você na comunidade.\n\nCaso você não receba o email nos próximos cinco minutos, favor enviar um email para SEGREDOSDAIA@gmail.com.';
-
-  h1.textContent = ''; 
-  p.textContent = '';
+  const h1=$('finalTitle'),p=$('finalParagraph');
+  const t1='[ ACESSO LIBERADO ]';
+  const t2='enviamos o link da comunidade para o seu email. esperamos você na comunidade. caso você não receba o email nos próximos cinco minutos favor enviar um email para segredosdaia@gmail.com.';
+  h1.textContent='';p.textContent='';
   h1.classList.add('caret');
-  let i = 0;
-
+  let i=0;
   function typeH1(){
-    if(i < t1.length){
-      h1.textContent += t1[i++];
-      setTimeout(typeH1, 70);
-    } else {
-      h1.classList.remove('caret');
-      typeP();
-    }
+    if(i<t1.length){h1.textContent+=t1[i++];setTimeout(typeH1,70);}
+    else{h1.classList.remove('caret');typeP();}
   }
-
   function typeP(){
-    p.classList.add('caret');
-    let j = 0;
-    // Usamos style.whiteSpace para que as quebras de linha (\n) funcionem como parágrafos
-    p.style.whiteSpace = 'pre-wrap'; 
-
-    function step(){
-      if(j < t2.length){
-        p.textContent += t2[j++]; // Usando textContent com \n é mais seguro e simples
-        setTimeout(step, 28);
-      } else {
-        p.classList.remove('caret');
-      }
-    }
+    p.classList.add('caret');let j=0;
+    function step(){if(j<t2.length){p.textContent+=t2[j++];setTimeout(step,28);}else p.classList.remove('caret');}
     step();
   }
   typeH1();
-}
 }
 </script>
 </body>
