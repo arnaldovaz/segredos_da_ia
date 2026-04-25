@@ -41,6 +41,7 @@
             align-items: center;
             justify-content: center;
             min-height: 200px; /* Garante altura mínima para centralização vertical */
+            width: 100%; /* Garante que ocupe a largura do container */
         }
 
         /* Garante que a primeira tela esteja ativa inicialmente, mesmo sem JS */
@@ -58,7 +59,15 @@
             animation: text-flicker var(--flicker-duration) infinite alternate;
             word-break: break-word; /* Garante quebra de palavra em telas pequenas */
             text-wrap: balance; /* Tenta equilibrar as linhas */
+            line-height: 1.2; /* Ajusta espaçamento entre linhas */
         }
+
+        /* Ajuste específico para o h1 de boas-vindas para forçar quebra de linha por palavra */
+        #screen0 h1 {
+            white-space: pre-wrap; /* Preserva espaços e quebra linhas */
+            font-size: 1.4em; /* Reduz um pouco o tamanho para ajudar na quebra */
+        }
+
 
         p {
             margin-bottom: 15px;
@@ -80,14 +89,13 @@
             font-size: 1em;
             outline: none;
             text-align: center;
-            /* A animação do caret será adicionada/removida via JS */
         }
         
-        input:not(:focus):empty-value { /* Estilo para inputs vazios e sem foco */
+        input:not(:focus):empty-value {
             animation: caret-flicker 1s steps(1) infinite;
         }
 
-        input.no-flicker { /* Classe para inputs com conteúdo */
+        input.no-flicker {
             animation: none;
         }
 
@@ -105,12 +113,13 @@
             text-transform: uppercase;
         }
 
-        button:disabled {
+        /* Removendo estilo de disabled para o teste */
+        /* button:disabled {
             background-color: #333;
             color: #666;
             cursor: not-allowed;
             box-shadow: none;
-        }
+        } */
 
         button:hover:not(:disabled) {
             background-color: var(--terminal-white);
@@ -187,6 +196,9 @@
             h1 {
                 font-size: 1.4em;
             }
+            #screen0 h1 { /* Ajuste extra para telas muito pequenas */
+                font-size: 1.2em;
+            }
             p {
                 font-size: 0.9em;
             }
@@ -203,7 +215,6 @@
 <body>
     <div class="container">
         <!-- New Screen 0-LGPD: Privacy Consent -->
-        <!-- Alterado para initial-active para garantir visibilidade inicial -->
         <div id="screen0-lgpd" class="screen initial-active">
             <h1>[PROTOCOLO_DE_PRIVACIDADE]</h1>
             <div class="lgpd-box">
@@ -212,20 +223,21 @@
                     <input type="checkbox" id="lgpdConsent"> Aceito os termos e condições.
                 </label>
             </div>
-            <button id="lgpdButton" onclick="nextScreen()" disabled>CONTINUAR</button>
+            <!-- Removendo o atributo disabled inicial para teste -->
+            <button id="lgpdButton" onclick="handleButtonClick(this)">CONTINUAR</button>
         </div>
 
         <!-- Screen 0: Welcome -->
         <div id="screen0" class="screen">
             <h1 class="typing-effect">[ACCESS_PROTOCOL_ESTABLISHED]</h1>
-            <button onclick="nextScreen()">INICIAR IDENTIFICAÇÃO</button>
+            <button onclick="handleButtonClick(this)">INICIAR IDENTIFICAÇÃO</button>
         </div>
 
         <!-- Screen 1: Identity -->
         <div id="screen1" class="screen">
             <p>Como o sistema deve registrar sua identidade?</p>
             <input type="text" id="identityInput" placeholder="Sua identidade..." required>
-            <button onclick="nextScreen()">PRÓXIMO</button>
+            <button onclick="handleButtonClick(this)">PRÓXIMO</button>
         </div>
 
         <!-- Screen 2: Firewall -->
@@ -234,6 +246,7 @@
             <div id="passwordButtons" class="button-group">
                 <!-- Buttons will be generated here by JavaScript -->
             </div>
+            <!-- Os botões de senha não precisam de handleButtonClick, eles chamam checkPassword diretamente -->
             <p id="errorMessage" class="error-message">[ERRO_DE_SISTEMA]</p>
         </div>
 
@@ -242,12 +255,11 @@
             <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
             <form id="dataForm" action="SEU_ENDPOINT_MAUTIC_AQUI" method="POST"> <!-- ATENÇÃO: Preencher com seu seu endpoint Mautic -->
                 <input type="email" id="emailInput" name="email" placeholder="E-mail" required class="flicker-on-empty">
-                <!-- Alterado type="tel" para permitir formatação e inputmode para teclado numérico -->
                 <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WhatsApp (DD NNNNN-NNNN)" 
                        pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" 
                        title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" 
                        inputmode="numeric" class="flicker-on-empty" required>
-                <button type="submit">SINCRONIZAR DADOS</button>
+                <button type="submit" onclick="handleButtonClick(this)">SINCRONIZAR DADOS</button>
             </form>
         </div>
 
@@ -255,24 +267,18 @@
         <div id="screen4" class="screen">
             <h1>[ ACESSO LIBERADO ]</h1>
             <p>enviamos o link da comunidade para o seu email. esperamos você na comunidade. caso você não receba o email nos próximos cinco minutos favor enviar um email para <a href="mailto:segredosdaia@gmail.com" style="color: var(--terminal-green); text-decoration: underline;">segredosdaia@gmail.com</a>.</p>
-            <!-- O botão "ENTRAR NA COMUNIDADE" foi removido -->
         </div>
     </div>
 
     <script>
-        // currentScreen é -1 para a tela LGPD, 0 para Welcome, 1 para Identity, etc.
         let currentScreen = -1; 
         const screens = document.querySelectorAll('.screen');
         const errorMessage = document.getElementById('errorMessage');
         const passwordButtonsContainer = document.getElementById('passwordButtons');
         const correctSignature = '53 45 47 52 45 44 4F'; 
         const allSignatures = [
-            '45 47 52 45 44 4F 53',
-            '47 52 45 44 4F 53 45',
-            '53 45 47 52 45 44 4F', 
-            '52 45 44 4F 53 45 47',
-            '45 44 4F 53 45 47 52',
-            '43 32 30 32 34 2D 41',
+            '45 47 52 45 44 4F 53', '47 52 45 44 4F 53 45', '53 45 47 52 45 44 4F', 
+            '52 45 44 4F 53 45 47', '45 44 4F 53 45 47 52', '43 32 30 32 34 2D 41',
             '46 45 4C 49 58 41 4F'
         ];
         const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234';
@@ -281,13 +287,52 @@
         const lgpdButton = document.getElementById('lgpdButton');
 
         lgpdConsentCheckbox.addEventListener('change', function() {
-            lgpdButton.disabled = !this.checked;
+            // lgpdButton.disabled = !this.checked; // REMOVIDO PARA TESTE
         });
 
-        // Função para mostrar uma tela específica
+        // Funções disableButton e enableButton temporariamente esvaziadas para teste
+        function disableButton(button) {
+            // if (button) { button.disabled = true; } 
+        }
+
+        function enableButton(button) {
+            // if (button) { button.disabled = false; }
+        }
+
+        function handleButtonClick(button) {
+            // disableButton(button); // Desativando chamada para teste
+
+            // A lógica de transição e validação
+            if (button === lgpdButton) { // Botão CONTINUAR da LGPD
+                if (!lgpdConsentCheckbox.checked) {
+                    alert('Você deve aceitar os termos de privacidade para continuar.');
+                    // enableButton(button); // Reativando chamada para teste
+                    return;
+                }
+                showScreen(0);
+            } else if (currentScreen === 0) { // Botão INICIAR IDENTIFICAÇÃO da Screen 0
+                showScreen(1); // Vai para a Screen 1 (Identidade)
+            } else if (currentScreen === 1) { // Botão PRÓXIMO da Screen 1 (Identidade)
+                const identity = document.getElementById('identityInput').value.trim();
+                if (!identity) {
+                    alert('Por favor, insira sua identidade para continuar.');
+                    // enableButton(button); // Reativando chamada para teste
+                    return;
+                }
+                showScreen(2); // Vai para a Screen 2 (Firewall)
+            } else if (currentScreen === 3 && button.type === 'submit') { // Botão SINCRONIZAR DADOS da Screen 3
+                const form = document.getElementById('dataForm');
+                if (!form.checkValidity()) { 
+                    // enableButton(button); // Reativando chamada para teste
+                    return;
+                }
+                form.dispatchEvent(new Event('submit', {cancelable: true}));
+            }
+        }
+
         function showScreen(index) {
             screens.forEach((screen, i) => {
-                screen.classList.remove('initial-active'); // Remove a classe de visibilidade inicial
+                screen.classList.remove('initial-active'); 
                 if (i === index) {
                     screen.classList.remove('fade-out');
                     screen.classList.add('active', 'fade-in');
@@ -299,12 +344,13 @@
             currentScreen = index;
             errorMessage.style.display = 'none';
 
-            if (index === 0) { // Se for a screen0 (Welcome), inicia o efeito de digitação
+            // Reinicia efeitos de digitação
+            if (index === 0) { 
                 const welcomeText = document.querySelector('#screen0 h1');
-                if (welcomeText) { // Verifica se o elemento existe
+                if (welcomeText) {
                     const originalWelcomeText = welcomeText.getAttribute('data-original-text') || welcomeText.textContent;
                     welcomeText.setAttribute('data-original-text', originalWelcomeText);
-                    welcomeText.textContent = ''; // Clear text for typing effect
+                    welcomeText.textContent = ''; 
                     let i = 0;
                     function typeWriterWelcome() {
                         if (i < originalWelcomeText.length) {
@@ -312,17 +358,16 @@
                             i++;
                             setTimeout(typeWriterWelcome, 70);
                         } else {
-                            welcomeText.classList.remove('typing-effect'); // Remove caret after typing
+                            welcomeText.classList.remove('typing-effect');
                         }
                     }
                     typeWriterWelcome();
                 }
-            } else if (index === 4) { // Se for a screen4 (Final), inicia o efeito de digitação
+            } else if (index === 4) { 
                  const finalScreenText = document.querySelector('#screen4 h1');
                  const finalScreenParagraph = document.querySelector('#screen4 p');
 
-                 // Reinicia os efeitos de digitação apenas se a tela for realmente ativada ou resetada
-                 if (finalScreenText && finalScreenText.getAttribute('data-original-text')) {
+                 if (finalScreenText && finalScreenText.hasAttribute('data-original-text')) {
                      finalScreenText.textContent = ''; 
                      let i = 0;
                      const originalText = finalScreenText.getAttribute('data-original-text');
@@ -355,80 +400,37 @@
                      }
                      typeWriterFinal();
                  }
-            } else if (index === 2) { // When entering Screen 2 (Firewall)
+            } else if (index === 2) { 
                 generateRandomPasswordButtons();
             }
-        }
 
-        function nextScreen() {
-            // Lógica para avançar da tela LGPD (índice -1)
-            if (currentScreen === -1) {
-                if (!lgpdConsentCheckbox.checked) {
-                    alert('Você deve aceitar os termos de privacidade para continuar.');
-                    return;
-                }
-                showScreen(0); // Vai para a tela de boas-vindas (Screen 0)
-                return; // Importante para não tentar avançar duas vezes
+            // Ativa todos os botões da nova tela ativa (sem usar disableButton/enableButton para teste)
+            const activeScreenElement = screens[index];
+            if (activeScreenElement) {
+                activeScreenElement.querySelectorAll('button').forEach(btn => {
+                    // btn.disabled = false; // Removido para teste
+                });
             }
-
-            // Lógica para a tela de Identidade (Screen 1)
-            if (currentScreen === 1) {
-                const identity = document.getElementById('identityInput').value.trim();
-                if (!identity) {
-                    alert('Por favor, insira sua identidade para continuar.');
-                    return;
-                }
-                // Store identity if needed
-            }
-            
-            // Lógica geral para avançar para a próxima tela
-            // Consideramos que screens.length - 1 é o último índice de uma tela na lista `screens`.
-            // Se currentScreen é o último, não avança.
-            if (currentScreen < screens.length - 1) { 
-                showScreen(currentScreen + 1);
-            }
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
-            }
-            return array;
-        }
-
-        function generateRandomPasswordButtons() {
-            let availableSignatures = allSignatures.filter(sig => sig !== correctSignature);
-            shuffleArray(availableSignatures);
-            let selectedSignatures = availableSignatures.slice(0, 4);
-            selectedSignatures.push(correctSignature);
-            shuffleArray(selectedSignatures);
-
-            passwordButtonsContainer.innerHTML = '';
-            selectedSignatures.forEach(signature => {
-                const button = document.createElement('button');
-                button.textContent = signature;
-                button.onclick = () => checkPassword(signature);
-                passwordButtonsContainer.appendChild(button);
-            });
         }
 
         function checkPassword(signature) {
+            // passwordButtonsContainer.querySelectorAll('button').forEach(btn => disableButton(btn)); // Removido para teste
+
             if (signature === correctSignature) {
-                nextScreen();
+                showScreen(3); 
             } else {
                 errorMessage.style.display = 'block';
                 setTimeout(() => {
                     errorMessage.style.display = 'none';
-                    showScreen(-1); // Reset to LGPD screen on error
+                    showScreen(-1); 
                 }, 1500);
             }
         }
 
-        // --- Email Sending Logic (CLIENT-SIDE SIMULATION) ---
-        // IMPORTANT: Real email sending must be done from a server-side script.
         document.getElementById('dataForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault(); 
+            const submitButton = this.querySelector('button[type="submit"]');
+            // disableButton(submitButton); // Removido para teste
 
             const email = document.getElementById('emailInput').value;
             const whatsapp = document.getElementById('whatsappInput').value;
@@ -436,53 +438,23 @@
             console.log(`Dados para envio: E-mail: ${email}, WhatsApp: ${whatsapp}`);
             console.log(`Simulando envio de e-mail com link para: ${whatsappInviteLink} para ${email}`);
 
-            // Replace 'SEU_ENDPOINT_MAUTIC_AQUI' with your actual Mautic form submission URL
-            // Example: const mauticFormUrl = 'https://sua-instancia-mautic.com/form/submit?formId=X';
-            // fetch(mauticFormUrl, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/x-www-form-urlencoded', // Mautic often expects this
-            //     },
-            //     body: new URLSearchParams({ // Correct way to send form data
-            //         'mauticform[email]': email,
-            //         'mauticform[whatsapp]': whatsapp,
-            //         'mauticform[submit]': '1', // Required for Mautic
-            //         'mauticform[return]': '',
-            //         'mauticform[formId]': 'X' // Your Mautic form ID
-            //     }).toString(),
-            // })
-            // .then(response => response.json()) // Mautic might return JSON
-            // .then(data => {
-            //     if (data.success) { // Or whatever Mautic's success indicator is
-            //         alert('Link da comunidade enviado para o seu e-mail!');
-            //         showScreen(4); // Advance to final screen
-            //     } else {
-            //         alert('Erro ao enviar o link. Tente novamente.');
-            //     }
-            // })
-            // .catch((error) => {
-            //     console.error('Erro na requisição:', error);
-            //     alert('Erro na comunicação com o servidor. Tente novamente.');
-            // });
-
-
-            // For this client-side only example, we just proceed after "sending"
-            alert('Link da comunidade enviado para o seu e-mail (simulado)!');
-            showScreen(4); // Advance to final screen
+            setTimeout(() => { 
+                alert('Link da comunidade enviado para o seu e-mail (simulado)!');
+                showScreen(4); 
+            }, 1000); 
         });
 
-        // Function to format phone number as (DD) NNNNN-NNNN or (DD) NNNN-NNNN
         function formatPhoneNumber(input) {
-            let value = input.value.replace(/\D/g, ''); // Remove all non-digit characters
+            let value = input.value.replace(/\D/g, ''); 
             let formattedValue = '';
 
             if (value.length > 0) {
-                formattedValue += value.substring(0, 2); // DD
+                formattedValue += value.substring(0, 2); 
                 if (value.length > 2) {
                     formattedValue += ' ';
-                    if (value.length > 7) { // NNNNN-NNNN
+                    if (value.length > 7) { 
                         formattedValue += value.substring(2, 7) + '-' + value.substring(7, 11);
-                    } else if (value.length > 6) { // NNNN-NNNN (older format)
+                    } else if (value.length > 6) {
                          formattedValue += value.substring(2, 6) + '-' + value.substring(6, 10);
                     } else {
                         formattedValue += value.substring(2, 10);
@@ -492,7 +464,6 @@
             input.value = formattedValue.trim();
         }
 
-        // Add event listeners for input fields to stop flickering when typing
         document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]').forEach(input => {
             input.addEventListener('input', function() {
                 if (this.value.trim() !== '') {
@@ -501,37 +472,40 @@
                     this.classList.remove('no-flicker');
                 }
             });
-            // Initial check in case there's pre-filled value
             if (input.value.trim() !== '') {
                 input.classList.add('no-flicker');
             }
         });
 
-        // Apply formatting to whatsapp input
         document.getElementById('whatsappInput').addEventListener('input', function() {
             formatPhoneNumber(this);
         });
 
-
-        // Initial setup
         document.addEventListener('DOMContentLoaded', () => {
-            // A tela LGPD já está visível via CSS .initial-active
-            currentScreen = -1; // Garante que o estado inicial do currentScreen esteja correto
-
-            // Remove a classe 'active' da tela LGPD se o JS estiver rodando
-            // Isso previne um conflito com 'initial-active' e garante que showScreen(-1) ou nextScreen() funcionem como esperado.
+            currentScreen = -1; 
             const lgpdScreen = document.getElementById('screen0-lgpd');
             if (lgpdScreen) {
                 lgpdScreen.classList.remove('active'); 
             }
             
-            generateRandomPasswordButtons(); // Pre-generate buttons for screen 2
+            generateRandomPasswordButtons(); 
+
+            const welcomeText = document.querySelector('#screen0 h1');
+            if (welcomeText) {
+                welcomeText.setAttribute('data-original-text', welcomeText.textContent);
+            }
+            const finalScreenText = document.querySelector('#screen4 h1');
+            if (finalScreenText) {
+                finalScreenText.setAttribute('data-original-text', finalScreenText.textContent);
+            }
+            const finalScreenParagraph = document.querySelector('#screen4 p');
+            if (finalScreenParagraph) {
+                finalScreenParagraph.setAttribute('data-original-text', finalScreenParagraph.textContent);
+            }
+            
+            // Inicializa o estado do botão LGPD baseado no checkbox, mas sem usar 'disabled' ainda para o teste
+            // lgpdButton.disabled = !lgpdConsentCheckbox.checked; // REMOVIDO PARA TESTE
         });
-
-        // Este bloco de observers foi movido e integrado na função showScreen(index) para a tela 4
-        // Isso simplifica a lógica e evita observadores desnecessários.
-        // A lógica de digitação para a tela 4 (Final) agora está dentro de showScreen(4).
-
     </script>
 </body>
 </html>
