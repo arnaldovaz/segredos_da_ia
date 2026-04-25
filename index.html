@@ -29,9 +29,9 @@
         }
 
         .container {
-            width: 90%;
+            width: 95%; /* Maior largura para mobile */
             max-width: 600px;
-            padding: 20px;
+            padding: 15px; /* Menor padding para mobile */
             box-sizing: border-box;
         }
 
@@ -48,14 +48,16 @@
         }
 
         h1, h2 {
-            font-size: 1.8em;
+            font-size: 1.6em; /* Ajuste para mobile */
             margin-bottom: 20px;
             animation: text-flicker var(--flicker-duration) infinite alternate;
+            word-break: break-word; /* Garante quebra de palavra em telas pequenas */
+            text-wrap: balance; /* Tenta equilibrar as linhas */
         }
 
         p {
             margin-bottom: 15px;
-            font-size: 1.1em;
+            font-size: 1em; /* Ajuste para mobile */
         }
 
         input[type="text"],
@@ -73,7 +75,15 @@
             font-size: 1em;
             outline: none;
             text-align: center;
+            /* A animação do caret será adicionada/removida via JS */
+        }
+        
+        input:not(:focus):empty-value { /* Estilo para inputs vazios e sem foco */
             animation: caret-flicker 1s steps(1) infinite;
+        }
+
+        input.no-flicker { /* Classe para inputs com conteúdo */
+            animation: none;
         }
 
         button {
@@ -90,7 +100,14 @@
             text-transform: uppercase;
         }
 
-        button:hover {
+        button:disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        button:hover:not(:disabled) {
             background-color: var(--terminal-white);
             color: var(--terminal-black);
             box-shadow: 0 0 10px var(--terminal-white);
@@ -116,6 +133,26 @@
             animation: caret-flicker 1s steps(1) infinite;
         }
 
+        .lgpd-box {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid var(--terminal-green);
+            padding: 20px;
+            margin-bottom: 20px;
+            max-width: 400px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .lgpd-box input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: var(--terminal-green); /* Cor do checkbox */
+        }
+        .lgpd-box label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
         @keyframes text-flicker {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.8; }
@@ -139,12 +176,41 @@
         .screen.active.fade-in {
             opacity: 1;
         }
+
+        /* Responsividade para fontes menores em telas muito pequenas */
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 1.4em;
+            }
+            p {
+                font-size: 0.9em;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+            .lgpd-box {
+                font-size: 0.8em;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- New Screen 0-LGPD: Privacy Consent -->
+        <div id="screen0-lgpd" class="screen active">
+            <h1>[PROTOCOLO_DE_PRIVACIDADE]</h1>
+            <div class="lgpd-box">
+                <p>Para continuar, você deve aceitar nossa política de tratamento de dados. Seus dados serão utilizados apenas para fins de comunicação sobre este acesso e comunidade.</p>
+                <label>
+                    <input type="checkbox" id="lgpdConsent"> Aceito os termos e condições.
+                </label>
+            </div>
+            <button id="lgpdButton" onclick="nextScreen()" disabled>CONTINUAR</button>
+        </div>
+
         <!-- Screen 0: Welcome -->
-        <div id="screen0" class="screen active">
+        <div id="screen0" class="screen">
             <h1 class="typing-effect">[ACCESS_PROTOCOL_ESTABLISHED]</h1>
             <button onclick="nextScreen()">INICIAR IDENTIFICAÇÃO</button>
         </div>
@@ -168,28 +234,27 @@
         <!-- Screen 3: Data -->
         <div id="screen3" class="screen">
             <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
-            <p style="font-size: 0.8em; margin-bottom: 20px;">Insira seus dados para sincronização de rede:</p>
-            
-            <form id="dataForm" action="https://hook.us2.make.com/a7o79i9nhdlfdxyfoqcq52el2upy8rqd" method="POST">
-                <!-- O campo NOME_COMPLETO foi removido daqui, pois a identidade já foi coletada na Screen 1. -->
-                
-                <input type="email" id="emailInput" name="sender_email" placeholder="EMAIL_DE_ACESSO" required>
-                
-                <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WHATSAPP (DD NNNNN-NNNN)" pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" required>
-                
+            <form id="dataForm" action="SEU_ENDPOINT_MAUTIC_AQUI" method="POST"> <!-- ATENÇÃO: Preencher com seu endpoint Mautic -->
+                <input type="email" id="emailInput" name="email" placeholder="E-mail" required class="flicker-on-empty">
+                <!-- Alterado type="tel" para permitir formatação e inputmode para teclado numérico -->
+                <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WhatsApp (DD NNNNN-NNNN)" 
+                       pattern="[0-9]{2} [0-9]{5}-[0-9]{4}|[0-9]{2} [0-9]{4}-[0-9]{4}" 
+                       title="Formato: DD NNNNN-NNNN ou DD NNNN-NNNN" 
+                       inputmode="numeric" class="flicker-on-empty" required>
                 <button type="submit">SINCRONIZAR DADOS</button>
             </form>
         </div>
 
         <!-- Screen 4: Final -->
         <div id="screen4" class="screen">
-            <h1 class="typing-effect">[ ACESSO LIBERADO ]</h1>
-            <button onclick="enterCommunity()">ENTRAR NA COMUNIDADE</button>
+            <h1>[ ACESSO LIBERADO ]</h1>
+            <p>enviamos o link da comunidade para o seu email. esperamos você na comunidade. caso você não receba o email nos próximos cinco minutos favor enviar um email para <a href="mailto:segredosdaia@gmail.com" style="color: var(--terminal-green); text-decoration: underline;">segredosdaia@gmail.com</a>.</p>
+            <!-- O botão "ENTRAR NA COMUNIDADE" foi removido -->
         </div>
     </div>
 
     <script>
-        let currentScreen = 0;
+        let currentScreen = -1; // Começa em -1 para a nova tela LGPD
         const screens = document.querySelectorAll('.screen');
         const errorMessage = document.getElementById('errorMessage');
         const passwordButtonsContainer = document.getElementById('passwordButtons');
@@ -200,13 +265,18 @@
             '53 45 47 52 45 44 4F', // This is the correct one
             '52 45 44 4F 53 45 47',
             '45 44 4F 53 45 47 52',
-            '43 32 30 32 34 2D 41', // Added more options for better randomization
+            '43 32 30 32 34 2D 41',
             '46 45 4C 49 58 41 4F'
         ];
-        const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234';
+        const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234'; // Seu link de comunidade
 
-        // Variável para armazenar a identidade da Screen 1
-        let userIdentity = '';
+        // LGPD Consent Logic
+        const lgpdConsentCheckbox = document.getElementById('lgpdConsent');
+        const lgpdButton = document.getElementById('lgpdButton');
+
+        lgpdConsentCheckbox.addEventListener('change', function() {
+            lgpdButton.disabled = !this.checked;
+        });
 
         function showScreen(index) {
             screens.forEach((screen, i) => {
@@ -227,18 +297,39 @@
         }
 
         function nextScreen() {
+            if (currentScreen === -1) { // From LGPD screen to Screen 0
+                if (!lgpdConsentCheckbox.checked) {
+                    alert('Você deve aceitar os termos de privacidade para continuar.');
+                    return;
+                }
+                showScreen(0);
+                // Inicia o efeito de digitação da tela 0
+                const welcomeText = document.querySelector('#screen0 h1');
+                const originalWelcomeText = welcomeText.textContent;
+                welcomeText.textContent = '';
+                let i = 0;
+                function typeWriterWelcome() {
+                    if (i < originalWelcomeText.length) {
+                        welcomeText.textContent += originalWelcomeText.charAt(i);
+                        i++;
+                        setTimeout(typeWriterWelcome, 70);
+                    } else {
+                        welcomeText.classList.remove('typing-effect');
+                    }
+                }
+                typeWriterWelcome();
+                return;
+            }
+
             if (currentScreen === 1) { // Identity Screen
-                const identityInput = document.getElementById('identityInput');
-                const identity = identityInput.value.trim();
+                const identity = document.getElementById('identityInput').value.trim();
                 if (!identity) {
                     alert('Por favor, insira sua identidade para continuar.');
                     return;
                 }
-                userIdentity = identity; // Armazena a identidade
-                // Opcional: Limpar o campo ou desabilitá-lo se a identidade não for editável
-                // identityInput.disabled = true;
+                // Store identity if needed, e.g., localStorage.setItem('user_identity', identity);
             }
-            if (currentScreen < screens.length - 1) {
+            if (currentScreen < screens.length -1) { // Mudar o limite por causa da tela LGPD
                 showScreen(currentScreen + 1);
             }
         }
@@ -252,14 +343,13 @@
         }
 
         function generateRandomPasswordButtons() {
-            // Ensure the correct signature is always present, and pick 4 other random ones
             let availableSignatures = allSignatures.filter(sig => sig !== correctSignature);
             shuffleArray(availableSignatures);
-            let selectedSignatures = availableSignatures.slice(0, 4); // Take 4 random incorrect
-            selectedSignatures.push(correctSignature); // Add the correct one
-            shuffleArray(selectedSignatures); // Shuffle again to randomize position of correct answer
+            let selectedSignatures = availableSignatures.slice(0, 4);
+            selectedSignatures.push(correctSignature);
+            shuffleArray(selectedSignatures);
 
-            passwordButtonsContainer.innerHTML = ''; // Clear previous buttons
+            passwordButtonsContainer.innerHTML = '';
             selectedSignatures.forEach(signature => {
                 const button = document.createElement('button');
                 button.textContent = signature;
@@ -275,89 +365,120 @@
                 errorMessage.style.display = 'block';
                 setTimeout(() => {
                     errorMessage.style.display = 'none';
-                    showScreen(0); // Reset to welcome screen
-                }, 1500); // Show error for 1.5 seconds then reset
+                    showScreen(-1); // Reset to LGPD screen on error
+                }, 1500);
             }
         }
 
-        // --- Make.com Integration Logic (using fetch for SPA) ---
+        // --- Email Sending Logic (CLIENT-SIDE SIMULATION) ---
+        // IMPORTANT: Real email sending must be done from a server-side script.
+        // This client-side form submission will just log to console or send to a placeholder.
         document.getElementById('dataForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission to keep SPA
-            
-            // Usamos a identidade armazenada da Screen 1
-            // const fullName = userIdentity; // Se precisar enviar a identidade como "nome completo"
+            event.preventDefault(); // Prevent default form submission
+
             const email = document.getElementById('emailInput').value;
             const whatsapp = document.getElementById('whatsappInput').value;
 
-            // Prepare data as a FormData object (for Make.com webhook)
-            const formData = new FormData();
-            // Você pode decidir se quer enviar a userIdentity para o Make.com.
-            // Se sim, adicione a linha abaixo:
-            // formData.append('user_identity', userIdentity);
-            formData.append('sender_email', email);
-            formData.append('whatsapp', whatsapp);
-            formData.append('community_link', whatsappInviteLink); // Send the community link as well
+            console.log(`Dados para envio: E-mail: ${email}, WhatsApp: ${whatsapp}`);
+            console.log(`Simulando envio de e-mail com link para: ${whatsappInviteLink} para ${email}`);
 
-            console.log("Enviando dados para Make.com:", Object.fromEntries(formData));
+            // Replace 'SEU_ENDPOINT_MAUTIC_AQUI' with your actual Mautic form submission URL
+            // Example: const mauticFormUrl = 'https://sua-instancia-mautic.com/form/submit?formId=X';
+            // fetch(mauticFormUrl, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/x-www-form-urlencoded', // Mautic often expects this
+            //     },
+            //     body: new URLSearchParams({ // Correct way to send form data
+            //         'mauticform[email]': email,
+            //         'mauticform[whatsapp]': whatsapp,
+            //         'mauticform[submit]': '1', // Required for Mautic
+            //         'mauticform[return]': '',
+            //         'mauticform[formId]': 'X' // Your Mautic form ID
+            //     }).toString(),
+            // })
+            // .then(response => response.json()) // Mautic might return JSON
+            // .then(data => {
+            //     if (data.success) { // Or whatever Mautic's success indicator is
+            //         alert('Link da comunidade enviado para o seu e-mail!');
+            //         showScreen(4); // Advance to final screen
+            //     } else {
+            //         alert('Erro ao enviar o link. Tente novamente.');
+            //     }
+            // })
+            // .catch((error) => {
+            //     console.error('Erro na requisição:', error);
+            //     alert('Erro na comunicação com o servidor. Tente novamente.');
+            // });
 
-            fetch(this.action, { // 'this.action' refers to the form's action URL
-                method: 'POST',
-                body: formData // Send as FormData, Make.com webhooks usually prefer this
-            })
-            .then(response => {
-                // Make.com webhooks usually return a 200 OK with "Accepted" text
-                // You might need to check the exact response from your Make.com scenario
-                if (response.ok) {
-                    return response.text(); // Or response.json() if your webhook returns JSON
-                }
-                throw new Error('Erro na comunicação com Make.com');
-            })
-            .then(data => {
-                console.log('Resposta do Make.com:', data);
-                alert('Seus dados foram sincronizados! O link da comunidade foi enviado para o seu e-mail.');
-                nextScreen(); // Advance to final screen after successful submission
-            })
-            .catch((error) => {
-                console.error('Erro ao enviar dados para Make.com:', error);
-                alert('Erro ao sincronizar dados. Tente novamente ou verifique sua conexão.');
-            });
+
+            // For this client-side only example, we just proceed after "sending"
+            alert('Link da comunidade enviado para o seu e-mail (simulado)!');
+            showScreen(4); // Advance to final screen
         });
 
-        function enterCommunity() {
-            // Se o usuário já recebeu o email, ele pode ir direto.
-            // Aqui, apenas confirmamos que o link foi enviado.
-            alert('Bem-vindo à comunidade! O link foi enviado para o seu e-mail.');
-            // Se quiser abrir o link diretamente após o ENTER, descomente a linha abaixo:
-            // window.open(whatsappInviteLink, '_blank');
-        }
+        // Function to format phone number as (DD) NNNNN-NNNN or (DD) NNNN-NNNN
+        function formatPhoneNumber(input) {
+            let value = input.value.replace(/\D/g, ''); // Remove all non-digit characters
+            let formattedValue = '';
 
-        // Initialize first screen with typing effect
-        document.addEventListener('DOMContentLoaded', () => {
-            const welcomeText = document.querySelector('#screen0 h1');
-            const originalWelcomeText = welcomeText.textContent;
-            welcomeText.textContent = ''; // Clear text for typing effect
-            let i = 0;
-            function typeWriterWelcome() {
-                if (i < originalWelcomeText.length) {
-                    welcomeText.textContent += originalWelcomeText.charAt(i);
-                    i++;
-                    setTimeout(typeWriterWelcome, 70); // Adjust typing speed
-                } else {
-                    welcomeText.classList.remove('typing-effect'); // Remove caret after typing
+            if (value.length > 0) {
+                formattedValue += value.substring(0, 2); // DD
+                if (value.length > 2) {
+                    formattedValue += ' ';
+                    if (value.length > 7) { // NNNNN-NNNN
+                        formattedValue += value.substring(2, 7) + '-' + value.substring(7, 11);
+                    } else if (value.length > 6) { // NNNN-NNNN (older format)
+                         formattedValue += value.substring(2, 6) + '-' + value.substring(6, 10);
+                    } else {
+                        formattedValue += value.substring(2, 10);
+                    }
                 }
             }
-            typeWriterWelcome();
+            input.value = formattedValue.trim();
+        }
+
+        // Add event listeners for input fields to stop flickering when typing
+        document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim() !== '') {
+                    this.classList.add('no-flicker');
+                } else {
+                    this.classList.remove('no-flicker');
+                }
+            });
+            // Initial check in case there's pre-filled value
+            if (input.value.trim() !== '') {
+                input.classList.add('no-flicker');
+            }
         });
+
+        // Apply formatting to whatsapp input
+        document.getElementById('whatsappInput').addEventListener('input', function() {
+            formatPhoneNumber(this);
+        });
+
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initially show the LGPD screen
+            showScreen(-1); // Display the new LGPD screen
+            generateRandomPasswordButtons(); // Pre-generate buttons for screen 2
+        });
+
 
         // Add typing effect to final screen and handle screen changes
         const screenObservers = [];
+        // Adjusted to include the LGPD screen as the actual 'first' screen
         screens.forEach((screen, index) => {
             const observer = new MutationObserver((mutationsList) => {
                 for (let mutation of mutationsList) {
                     if (mutation.attributeName === 'class' && screen.classList.contains('active')) {
                         // Handle typing effect for Screen 4
-                        if (index === 4) {
+                        if (index === 4) { // This is now screen 4 (index 4)
                             const finalScreenText = screen.querySelector('h1');
+                            const finalScreenParagraph = screen.querySelector('p');
+
                             if (finalScreenText && !finalScreenText.hasAttribute('data-original-text')) {
                                 finalScreenText.setAttribute('data-original-text', finalScreenText.textContent);
                             }
@@ -373,6 +494,24 @@
                                         setTimeout(typeWriterFinal, 70);
                                     } else {
                                         finalScreenText.classList.remove('typing-effect');
+                                        // Start typing paragraph after h1 is done
+                                        if (finalScreenParagraph) {
+                                            const originalParagraphText = finalScreenParagraph.getAttribute('data-original-text') || finalScreenParagraph.textContent;
+                                            finalScreenParagraph.setAttribute('data-original-text', originalParagraphText);
+                                            finalScreenParagraph.textContent = ''; // Clear for typing effect
+                                            finalScreenParagraph.classList.add('typing-effect');
+                                            let p_i = 0;
+                                            function typeWriterParagraph() {
+                                                if (p_i < originalParagraphText.length) {
+                                                    finalScreenParagraph.textContent += originalParagraphText.charAt(p_i);
+                                                    p_i++;
+                                                    setTimeout(typeWriterParagraph, 30); // Faster typing for paragraph
+                                                } else {
+                                                    finalScreenParagraph.classList.remove('typing-effect');
+                                                }
+                                            }
+                                            typeWriterParagraph();
+                                        }
                                     }
                                 }
                                 typeWriterFinal();
@@ -385,10 +524,6 @@
             screenObservers.push(observer);
         });
 
-        // Initial generation of password buttons when the page loads (before screen 2 is shown, for setup)
-        // This will be called again when screen 2 is truly activated.
-        generateRandomPasswordButtons();
     </script>
 </body>
-</html>
 </html>
