@@ -43,7 +43,12 @@
             min-height: 200px; /* Garante altura mínima para centralização vertical */
         }
 
-        .screen.active {
+        /* Garante que a primeira tela esteja ativa inicialmente, mesmo sem JS */
+        .screen.initial-active {
+            display: flex;
+        }
+
+        .screen.active { /* Esta classe ainda será usada pelo JS para controle dinâmico */
             display: flex;
         }
 
@@ -198,7 +203,8 @@
 <body>
     <div class="container">
         <!-- New Screen 0-LGPD: Privacy Consent -->
-        <div id="screen0-lgpd" class="screen active">
+        <!-- Alterado para initial-active para garantir visibilidade inicial -->
+        <div id="screen0-lgpd" class="screen initial-active">
             <h1>[PROTOCOLO_DE_PRIVACIDADE]</h1>
             <div class="lgpd-box">
                 <p>Para continuar, você deve aceitar nossa política de tratamento de dados. Seus dados serão utilizados apenas para fins de comunicação sobre este acesso e comunidade.</p>
@@ -234,7 +240,7 @@
         <!-- Screen 3: Data -->
         <div id="screen3" class="screen">
             <h1>[VALIDAÇÃO_CONCLUÍDA]</h1>
-            <form id="dataForm" action="SEU_ENDPOINT_MAUTIC_AQUI" method="POST"> <!-- ATENÇÃO: Preencher com seu endpoint Mautic -->
+            <form id="dataForm" action="SEU_ENDPOINT_MAUTIC_AQUI" method="POST"> <!-- ATENÇÃO: Preencher com seu seu endpoint Mautic -->
                 <input type="email" id="emailInput" name="email" placeholder="E-mail" required class="flicker-on-empty">
                 <!-- Alterado type="tel" para permitir formatação e inputmode para teclado numérico -->
                 <input type="tel" id="whatsappInput" name="whatsapp" placeholder="WhatsApp (DD NNNNN-NNNN)" 
@@ -254,23 +260,23 @@
     </div>
 
     <script>
-        let currentScreen = -1; // Começa em -1 para a nova tela LGPD
+        // currentScreen é -1 para a tela LGPD, 0 para Welcome, 1 para Identity, etc.
+        let currentScreen = -1; 
         const screens = document.querySelectorAll('.screen');
         const errorMessage = document.getElementById('errorMessage');
         const passwordButtonsContainer = document.getElementById('passwordButtons');
-        const correctSignature = '53 45 47 52 45 44 4F'; // The correct answer
+        const correctSignature = '53 45 47 52 45 44 4F'; 
         const allSignatures = [
             '45 47 52 45 44 4F 53',
             '47 52 45 44 4F 53 45',
-            '53 45 47 52 45 44 4F', // This is the correct one
+            '53 45 47 52 45 44 4F', 
             '52 45 44 4F 53 45 47',
             '45 44 4F 53 45 47 52',
             '43 32 30 32 34 2D 41',
             '46 45 4C 49 58 41 4F'
         ];
-        const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234'; // Seu link de comunidade
+        const whatsappInviteLink = 'https://chat.whatsapp.com/invite/1234';
 
-        // LGPD Consent Logic
         const lgpdConsentCheckbox = document.getElementById('lgpdConsent');
         const lgpdButton = document.getElementById('lgpdButton');
 
@@ -278,8 +284,10 @@
             lgpdButton.disabled = !this.checked;
         });
 
+        // Função para mostrar uma tela específica
         function showScreen(index) {
             screens.forEach((screen, i) => {
+                screen.classList.remove('initial-active'); // Remove a classe de visibilidade inicial
                 if (i === index) {
                     screen.classList.remove('fade-out');
                     screen.classList.add('active', 'fade-in');
@@ -291,45 +299,92 @@
             currentScreen = index;
             errorMessage.style.display = 'none';
 
-            if (index === 2) { // When entering Screen 2 (Firewall)
+            if (index === 0) { // Se for a screen0 (Welcome), inicia o efeito de digitação
+                const welcomeText = document.querySelector('#screen0 h1');
+                if (welcomeText) { // Verifica se o elemento existe
+                    const originalWelcomeText = welcomeText.getAttribute('data-original-text') || welcomeText.textContent;
+                    welcomeText.setAttribute('data-original-text', originalWelcomeText);
+                    welcomeText.textContent = ''; // Clear text for typing effect
+                    let i = 0;
+                    function typeWriterWelcome() {
+                        if (i < originalWelcomeText.length) {
+                            welcomeText.textContent += originalWelcomeText.charAt(i);
+                            i++;
+                            setTimeout(typeWriterWelcome, 70);
+                        } else {
+                            welcomeText.classList.remove('typing-effect'); // Remove caret after typing
+                        }
+                    }
+                    typeWriterWelcome();
+                }
+            } else if (index === 4) { // Se for a screen4 (Final), inicia o efeito de digitação
+                 const finalScreenText = document.querySelector('#screen4 h1');
+                 const finalScreenParagraph = document.querySelector('#screen4 p');
+
+                 // Reinicia os efeitos de digitação apenas se a tela for realmente ativada ou resetada
+                 if (finalScreenText && finalScreenText.getAttribute('data-original-text')) {
+                     finalScreenText.textContent = ''; 
+                     let i = 0;
+                     const originalText = finalScreenText.getAttribute('data-original-text');
+                     finalScreenText.classList.add('typing-effect'); 
+                     function typeWriterFinal() {
+                         if (i < originalText.length) {
+                             finalScreenText.textContent += originalText.charAt(i);
+                             i++;
+                             setTimeout(typeWriterFinal, 70);
+                         } else {
+                             finalScreenText.classList.remove('typing-effect');
+                             if (finalScreenParagraph) {
+                                 const originalParagraphText = finalScreenParagraph.getAttribute('data-original-text') || finalScreenParagraph.textContent;
+                                 finalScreenParagraph.setAttribute('data-original-text', originalParagraphText);
+                                 finalScreenParagraph.textContent = ''; 
+                                 finalScreenParagraph.classList.add('typing-effect');
+                                 let p_i = 0;
+                                 function typeWriterParagraph() {
+                                     if (p_i < originalParagraphText.length) {
+                                         finalScreenParagraph.textContent += originalParagraphText.charAt(p_i);
+                                         p_i++;
+                                         setTimeout(typeWriterParagraph, 30); 
+                                     } else {
+                                         finalScreenParagraph.classList.remove('typing-effect');
+                                     }
+                                 }
+                                 typeWriterParagraph();
+                             }
+                         }
+                     }
+                     typeWriterFinal();
+                 }
+            } else if (index === 2) { // When entering Screen 2 (Firewall)
                 generateRandomPasswordButtons();
             }
         }
 
         function nextScreen() {
-            if (currentScreen === -1) { // From LGPD screen to Screen 0
+            // Lógica para avançar da tela LGPD (índice -1)
+            if (currentScreen === -1) {
                 if (!lgpdConsentCheckbox.checked) {
                     alert('Você deve aceitar os termos de privacidade para continuar.');
                     return;
                 }
-                showScreen(0);
-                // Inicia o efeito de digitação da tela 0
-                const welcomeText = document.querySelector('#screen0 h1');
-                const originalWelcomeText = welcomeText.textContent;
-                welcomeText.textContent = '';
-                let i = 0;
-                function typeWriterWelcome() {
-                    if (i < originalWelcomeText.length) {
-                        welcomeText.textContent += originalWelcomeText.charAt(i);
-                        i++;
-                        setTimeout(typeWriterWelcome, 70);
-                    } else {
-                        welcomeText.classList.remove('typing-effect');
-                    }
-                }
-                typeWriterWelcome();
-                return;
+                showScreen(0); // Vai para a tela de boas-vindas (Screen 0)
+                return; // Importante para não tentar avançar duas vezes
             }
 
-            if (currentScreen === 1) { // Identity Screen
+            // Lógica para a tela de Identidade (Screen 1)
+            if (currentScreen === 1) {
                 const identity = document.getElementById('identityInput').value.trim();
                 if (!identity) {
                     alert('Por favor, insira sua identidade para continuar.');
                     return;
                 }
-                // Store identity if needed, e.g., localStorage.setItem('user_identity', identity);
+                // Store identity if needed
             }
-            if (currentScreen < screens.length -1) { // Mudar o limite por causa da tela LGPD
+            
+            // Lógica geral para avançar para a próxima tela
+            // Consideramos que screens.length - 1 é o último índice de uma tela na lista `screens`.
+            // Se currentScreen é o último, não avança.
+            if (currentScreen < screens.length - 1) { 
                 showScreen(currentScreen + 1);
             }
         }
@@ -372,7 +427,6 @@
 
         // --- Email Sending Logic (CLIENT-SIDE SIMULATION) ---
         // IMPORTANT: Real email sending must be done from a server-side script.
-        // This client-side form submission will just log to console or send to a placeholder.
         document.getElementById('dataForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent default form submission
 
@@ -461,68 +515,22 @@
 
         // Initial setup
         document.addEventListener('DOMContentLoaded', () => {
-            // Initially show the LGPD screen
-            showScreen(-1); // Display the new LGPD screen
+            // A tela LGPD já está visível via CSS .initial-active
+            currentScreen = -1; // Garante que o estado inicial do currentScreen esteja correto
+
+            // Remove a classe 'active' da tela LGPD se o JS estiver rodando
+            // Isso previne um conflito com 'initial-active' e garante que showScreen(-1) ou nextScreen() funcionem como esperado.
+            const lgpdScreen = document.getElementById('screen0-lgpd');
+            if (lgpdScreen) {
+                lgpdScreen.classList.remove('active'); 
+            }
+            
             generateRandomPasswordButtons(); // Pre-generate buttons for screen 2
         });
 
-
-        // Add typing effect to final screen and handle screen changes
-        const screenObservers = [];
-        // Adjusted to include the LGPD screen as the actual 'first' screen
-        screens.forEach((screen, index) => {
-            const observer = new MutationObserver((mutationsList) => {
-                for (let mutation of mutationsList) {
-                    if (mutation.attributeName === 'class' && screen.classList.contains('active')) {
-                        // Handle typing effect for Screen 4
-                        if (index === 4) { // This is now screen 4 (index 4)
-                            const finalScreenText = screen.querySelector('h1');
-                            const finalScreenParagraph = screen.querySelector('p');
-
-                            if (finalScreenText && !finalScreenText.hasAttribute('data-original-text')) {
-                                finalScreenText.setAttribute('data-original-text', finalScreenText.textContent);
-                            }
-                            if (finalScreenText && finalScreenText.getAttribute('data-original-text')) {
-                                finalScreenText.textContent = ''; // Clear again
-                                let i = 0;
-                                const originalText = finalScreenText.getAttribute('data-original-text');
-                                finalScreenText.classList.add('typing-effect'); // Add caret
-                                function typeWriterFinal() {
-                                    if (i < originalText.length) {
-                                        finalScreenText.textContent += originalText.charAt(i);
-                                        i++;
-                                        setTimeout(typeWriterFinal, 70);
-                                    } else {
-                                        finalScreenText.classList.remove('typing-effect');
-                                        // Start typing paragraph after h1 is done
-                                        if (finalScreenParagraph) {
-                                            const originalParagraphText = finalScreenParagraph.getAttribute('data-original-text') || finalScreenParagraph.textContent;
-                                            finalScreenParagraph.setAttribute('data-original-text', originalParagraphText);
-                                            finalScreenParagraph.textContent = ''; // Clear for typing effect
-                                            finalScreenParagraph.classList.add('typing-effect');
-                                            let p_i = 0;
-                                            function typeWriterParagraph() {
-                                                if (p_i < originalParagraphText.length) {
-                                                    finalScreenParagraph.textContent += originalParagraphText.charAt(p_i);
-                                                    p_i++;
-                                                    setTimeout(typeWriterParagraph, 30); // Faster typing for paragraph
-                                                } else {
-                                                    finalScreenParagraph.classList.remove('typing-effect');
-                                                }
-                                            }
-                                            typeWriterParagraph();
-                                        }
-                                    }
-                                }
-                                typeWriterFinal();
-                            }
-                        }
-                    }
-                }
-            });
-            observer.observe(screen, { attributes: true });
-            screenObservers.push(observer);
-        });
+        // Este bloco de observers foi movido e integrado na função showScreen(index) para a tela 4
+        // Isso simplifica a lógica e evita observadores desnecessários.
+        // A lógica de digitação para a tela 4 (Final) agora está dentro de showScreen(4).
 
     </script>
 </body>
